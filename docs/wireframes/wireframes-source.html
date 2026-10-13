@@ -1,0 +1,65 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>
+body{margin:0;background:#fff;font-family:"Comic Sans MS","Segoe Print",cursive,sans-serif;color:#333}
+.frame{width:900px;height:620px;border:3px solid #333;margin:20px;position:relative;background:#fff}
+.title{position:absolute;bottom:-2px;right:10px;font-size:13px;background:#fff;padding:2px 6px;border:2px solid #333;border-bottom:none}
+.nav{height:56px;border-bottom:2px solid #333;display:flex;align-items:center;gap:24px;padding:0 20px}
+.box{border:2px solid #333;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.x{background:linear-gradient(to top right,transparent 49.5%,#999 49.5%,#999 50.5%,transparent 50.5%),linear-gradient(to top left,transparent 49.5%,#999 49.5%,#999 50.5%,transparent 50.5%)}
+.ann{color:#c0392b;font-size:13px;position:absolute}
+.pill{border:2px solid #333;border-radius:20px;padding:2px 10px;font-size:12px}
+.row{display:flex;gap:16px;align-items:center}
+.line{height:10px;background:#bbb;border-radius:4px}
+</style></head><body>
+
+<div class="frame" id="wf-list"><div class="title">WF-1 Animal List (US-01) — /animals</div>
+<div class="nav"><b>🐾 Shelter</b><span><u>Animals</u></span><span>[role links]</span><span style="margin-left:auto" class="box" >&nbsp;Login / Logout&nbsp;</span></div>
+<div style="padding:20px"><div style="font-size:22px">Find an animal</div>
+<div class="row box" style="justify-content:flex-start;padding:12px;margin:12px 0;gap:20px">
+<span>Species [ All ▾ ]</span><span>Breed [ ____________ ]</span><span>Status [ Any ▾ ]</span><span>(Clear filters)</span></div>
+<div style="font-size:12px">N animals found</div>
+<div class="row" style="margin-top:8px">
+<div style="width:200px"><div class="box x" style="height:120px"></div><div class="row" style="justify-content:space-between;margin-top:6px"><b>Name</b><span class="pill">Status</span></div><div class="line" style="width:150px;margin-top:6px"></div></div>
+<div style="width:200px"><div class="box x" style="height:120px"></div><div class="row" style="justify-content:space-between;margin-top:6px"><b>Name</b><span class="pill">Status</span></div><div class="line" style="width:150px;margin-top:6px"></div></div>
+<div style="width:200px"><div class="box x" style="height:120px"></div><div class="row" style="justify-content:space-between;margin-top:6px"><b>Name</b><span class="pill">Status</span></div><div class="line" style="width:150px;margin-top:6px"></div></div>
+<div style="width:200px"><div class="box x" style="height:120px"></div><div class="row" style="justify-content:space-between;margin-top:6px"><b>Name</b><span class="pill">Status</span></div><div class="line" style="width:150px;margin-top:6px"></div></div>
+</div>
+<div class="box" style="height:60px;margin-top:20px;border-style:dashed">Empty state: "No animals match your search."</div>
+</div>
+<div class="ann" style="top:175px;left:660px">← filters update the list + URL</div>
+<div class="ann" style="top:470px;left:20px">card click → profile (WF-2)</div>
+</div>
+
+<div class="frame" id="wf-profile"><div class="title">WF-2 Animal Profile (US-02) — /animals/:id</div>
+<div class="nav"><b>🐾 Shelter</b><span>Animals</span><span style="margin-left:auto" class="box">&nbsp;Login&nbsp;</span></div>
+<div style="padding:20px 80px"><div>← All animals</div>
+<div class="row" style="align-items:flex-start;margin-top:12px;gap:30px">
+<div class="box x" style="width:340px;height:260px"></div>
+<div style="flex:1"><div class="row" style="justify-content:space-between"><span style="font-size:28px">Name</span><span class="pill">Status</span></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:18px 0"><div>Species<br><div class="line" style="width:90px"></div></div><div>Breed<br><div class="line" style="width:120px"></div></div><div>Age<br><div class="line" style="width:60px"></div></div><div>Sex<br><div class="line" style="width:60px"></div></div></div>
+<div class="line" style="width:100%"></div><div class="line" style="width:80%;margin-top:6px"></div>
+<div class="box" style="width:200px;height:40px;margin-top:20px;background:#eee">[ Apply to adopt ]</div>
+</div></div>
+<div class="box" style="height:50px;margin-top:30px;border-style:dashed">Unknown ID → "Animal not found" + link back</div>
+</div>
+<div class="ann" style="top:330px;left:640px">↑ only when status = Available<br>(otherwise "not open for applications";<br>Staff see "Edit animal")</div>
+</div>
+
+<div class="frame" id="wf-login"><div class="title">WF-3 Login (US-05) — /login</div>
+<div class="nav"><b>🐾 Shelter</b><span>Animals</span><span style="margin-left:auto" class="box">&nbsp;Login&nbsp;</span></div>
+<div class="box" style="width:340px;height:330px;margin:50px auto;flex-direction:column;align-items:stretch;justify-content:flex-start;padding:24px;gap:14px">
+<div style="font-size:24px">Log in</div>
+<div class="box" style="height:34px;border-style:dashed;font-size:12px">error: "Invalid email or password."</div>
+<div>Email<div class="box" style="height:34px"></div></div>
+<div>Password<div class="box" style="height:34px"></div></div>
+<div class="box" style="height:40px;background:#eee">[ Log in ]</div></div>
+<div class="ann" style="top:300px;left:640px">Staff → /staff/applications<br>Adopter → back to page they came from<br>(or /animals)</div>
+</div>
+
+<div class="frame" id="wf-nav" style="height:300px"><div class="title">WF-4 Navbar states</div>
+<div style="padding:20px;display:flex;flex-direction:column;gap:20px">
+<div>Logged out:<div class="nav box" style="justify-content:flex-start"><b>🐾 Shelter</b><span>Animals</span><span style="margin-left:auto">[ Login ]</span></div></div>
+<div>Adopter:<div class="nav box" style="justify-content:flex-start"><b>🐾 Shelter</b><span>Animals</span><span>My applications</span><span style="margin-left:auto">Name (Adopter) [ Logout ]</span></div></div>
+<div>Staff:<div class="nav box" style="justify-content:flex-start"><b>🐾 Shelter</b><span>Animals</span><span>Review applications</span><span>Add animal</span><span style="margin-left:auto">Name (Staff) [ Logout ]</span></div></div>
+</div></div>
+</body></html>
