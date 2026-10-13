@@ -1,0 +1,28 @@
+sequenceDiagram
+    autonumber
+    actor Adopter
+    participant AL as AnimalList (React page)
+    participant API as api.js (request helper)
+    participant R as routes/animals.js (Express router)
+    participant AC as AnimalController
+    participant A as Animal (model)
+    participant DB as SQLite (animals table)
+
+    Adopter->>AL: select Species = "Dog"
+    AL->>AL: updateParam("species", "Dog")<br/>(URL becomes ?species=Dog)
+    AL->>API: listAnimals({ species: "Dog", breed, status })
+    API->>R: GET /api/animals?species=Dog
+    R->>AC: list(req, res)
+    AC->>AC: optionalText / optionalStatus<br/>(validate filters, 400 if invalid)
+    AC->>A: findAll({ species: "Dog" })
+    A->>DB: SELECT ... FROM animals<br/>WHERE species = ? COLLATE NOCASE ORDER BY id
+    DB-->>A: rows
+    A-->>AC: animals[]
+    AC-->>R: res.json(animals)
+    R-->>API: 200 OK, JSON array
+    API-->>AL: normalized animals[]
+    alt one or more matches
+        AL-->>Adopter: show AnimalCard for each animal, with StatusBadge
+    else no matches
+        AL-->>Adopter: show "No animals match your search."
+    end
