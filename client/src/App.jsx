@@ -1,122 +1,81 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import Navbar from './components/Navbar.jsx';
+import ErrorBoundary from './components/ErrorBoundary.jsx';
+import ScrollToTop from './components/ScrollToTop.jsx';
+import RequireRole from './auth/RequireRole.jsx';
+import AnimalList from './pages/AnimalList.jsx';
+import AnimalProfile from './pages/AnimalProfile.jsx';
+import Login from './pages/Login.jsx';
+import MyApplications from './pages/MyApplications.jsx';
+import NotFound from './pages/NotFound.jsx';
+// Placeholders: M2 and M3 replace the contents of these files with their pages.
+import ApplicationForm from './pages/ApplicationForm.jsx';
+import StaffApplications from './pages/StaffApplications.jsx';
+import StaffAnimalForm from './pages/StaffAnimalForm.jsx';
 
-function App() {
-  const [count, setCount] = useState(0)
-
+export default function App() {
+  const { pathname } = useLocation();
   return (
     <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
+      <a href="#main" className="skip-link">
+        Skip to content
+      </a>
+      <ScrollToTop />
+      <Navbar />
+      <main id="main" tabIndex={-1}>
+        <ErrorBoundary resetKey={pathname}>
+          <Routes>
+            <Route path="/" element={<Navigate to="/animals" replace />} />
+            {/* M1 */}
+            <Route path="/animals" element={<AnimalList />} />
+            <Route path="/animals/:id" element={<AnimalProfile />} />
+            <Route path="/login" element={<Login />} />
+            <Route
+              path="/my-applications"
+              element={
+                <RequireRole role="Adopter">
+                  <MyApplications />
+                </RequireRole>
+              }
+            />
+            {/* M2 */}
+            <Route
+              path="/animals/:id/apply"
+              element={
+                <RequireRole role="Adopter">
+                  <ApplicationForm />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/staff/applications"
+              element={
+                <RequireRole role="Staff">
+                  <StaffApplications />
+                </RequireRole>
+              }
+            />
+            {/* M3 */}
+            <Route
+              path="/staff/animals/new"
+              element={
+                <RequireRole role="Staff">
+                  <StaffAnimalForm />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/staff/animals/:id/edit"
+              element={
+                <RequireRole role="Staff">
+                  <StaffAnimalForm />
+                </RequireRole>
+              }
+            />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </ErrorBoundary>
+      </main>
     </>
-  )
+  );
 }
-
-export default App
