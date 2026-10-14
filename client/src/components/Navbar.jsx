@@ -14,7 +14,16 @@ export default function Navbar() {
     <header className="navbar">
       <div className="navbar-inner">
         <Link to="/animals" className="brand">
-          <span aria-hidden="true">🐾</span> Paws Shelter
+          <span className="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 40 40" focusable="false">
+              <ellipse cx="20" cy="25" rx="8" ry="6.5" />
+              <ellipse cx="11" cy="16" rx="3.2" ry="4" />
+              <ellipse cx="17" cy="11.5" rx="3.2" ry="4" />
+              <ellipse cx="23" cy="11.5" rx="3.2" ry="4" />
+              <ellipse cx="29" cy="16" rx="3.2" ry="4" />
+            </svg>
+          </span>
+          Paws Shelter
         </Link>
         <nav className="nav-links" aria-label="Main">
           <NavLink to="/animals" end>
@@ -27,7 +36,7 @@ export default function Navbar() {
         <div className="nav-user">
           {isLoggedIn ? (
             <>
-              <span className="muted small nav-name" title={user?.email}>
+              <span className="small nav-name" title={user?.email}>
                 {user?.name || user?.email} <span className="role">{user?.role}</span>
               </span>
               <button type="button" className="btn btn-ghost" onClick={handleLogout}>

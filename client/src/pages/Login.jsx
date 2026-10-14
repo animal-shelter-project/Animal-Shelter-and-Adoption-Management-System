@@ -3,6 +3,7 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth.js';
 import { redirectAfterLogin, safeRedirect } from '../auth/redirects.js';
 import { useDocumentTitle } from '../hooks.js';
+import PetArt from '../components/PetArt.jsx';
 
 // US-05: log in as an Adopter or Staff member.
 //
@@ -16,6 +17,8 @@ import { useDocumentTitle } from '../hooks.js';
 //  - Can't double-submit; the error is announced to screen readers and the
 //    password box is cleared and focused after a failed attempt.
 //  - Already logged in -> skip the form.
+const LOGIN_PET = { id: 'login', species: 'Cat', breed: 'Siamese' };
+
 export default function Login() {
   useDocumentTitle('Log in');
   const { login, isLoggedIn, user, sessionExpired } = useAuth();
@@ -64,9 +67,11 @@ export default function Login() {
   };
 
   return (
-    <div className="page narrow">
+    <div className="page narrow auth-page">
       <form className="auth-card" onSubmit={handleSubmit} noValidate aria-describedby="login-msg">
+        <PetArt animal={LOGIN_PET} className="auth-pet" />
         <h1>Log in</h1>
+        <p className="muted auth-lede">Welcome back. Log in to apply for an animal and follow your applications.</p>
         <div id="login-msg">
           {sessionExpired && !error && (
             <div className="notice" role="status">

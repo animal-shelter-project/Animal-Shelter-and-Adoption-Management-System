@@ -6,10 +6,38 @@ import { mockApi, renderAt } from '../test/helpers.jsx';
 
 const renderList = (path = '/animals') => renderAt(path, '/animals', <AnimalList />);
 
-describe('US-01 Search animals (FR-01, UC-01)', () => {
-  it('T-SEARCH-1: filtering species=Dog shows only dogs', async () => {
+describe('Browse available animals (proposal R-02 / US-02)', () => {
+  it('T-BROWSE-1: on load only Available animals are shown', async () => {
     const fetchSpy = mockApi();
     renderList();
+
+    expect(await screen.findAllByTestId('animal-card')).toHaveLength(3);
+    screen
+      .getAllByTestId('status-badge')
+      .forEach((badge) => expect(badge).toHaveTextContent('Available'));
+    expect(screen.queryByText('Max')).not.toBeInTheDocument(); // Pending
+    expect(screen.queryByText('Oliver')).not.toBeInTheDocument(); // Adopted
+    expect(String(fetchSpy.mock.calls[0][0])).toContain('status=Available');
+  });
+
+  it('T-BROWSE-2: "All statuses" shows every animal with its badge', async () => {
+    const fetchSpy = mockApi();
+    renderList();
+    await screen.findAllByTestId('animal-card');
+
+    await userEvent.selectOptions(screen.getByLabelText('Status'), 'all');
+
+    await waitFor(() => expect(screen.getAllByTestId('animal-card')).toHaveLength(5));
+    expect(screen.getByText('Max')).toBeInTheDocument();
+    expect(String(fetchSpy.mock.calls.at(-1)[0])).not.toContain('status=');
+    expect(screen.getByTestId('location')).toHaveTextContent('/animals?status=all');
+  });
+});
+
+describe('Search and filter (proposal R-03 / US-03; plan US-01, FR-01)', () => {
+  it('T-SEARCH-1: filtering species=Dog shows only dogs', async () => {
+    const fetchSpy = mockApi();
+    renderList('/animals?status=all');
 
     expect(await screen.findAllByTestId('animal-card')).toHaveLength(5);
 
@@ -24,7 +52,47 @@ describe('US-01 Search animals (FR-01, UC-01)', () => {
 
     const lastUrl = String(fetchSpy.mock.calls.at(-1)[0]);
     expect(lastUrl).toContain('/api/animals?species=Dog');
-    expect(screen.getByTestId('location')).toHaveTextContent('/animals?species=Dog');
+    expect(screen.getByTestId('location')).toHaveTextContent('species=Dog');
+  });
+
+  it('T-AGE-1: the age filter shows only animals in that age group', async () => {
+    const fetchSpy = mockApi();
+    renderList();
+    await screen.findAllByTestId('animal-card'); // Buddy 3, Luna 2, Coco 1
+
+    await userEvent.selectOptions(screen.getByLabelText('Age'), 'young');
+    await waitFor(() => expect(screen.getAllByTestId('animal-card')).toHaveLength(1));
+    expect(screen.getByText('Coco')).toBeInTheDocument();
+
+    await userEvent.selectOptions(screen.getByLabelText('Age'), 'adult');
+    await waitFor(() => expect(screen.getAllByTestId('animal-card')).toHaveLength(2));
+    expect(screen.getByText('Buddy')).toBeInTheDocument();
+    expect(screen.getByText('Luna')).toBeInTheDocument();
+    expect(screen.getByTestId('location')).toHaveTextContent('age=adult');
+    // Age is applied in the browser; the server never gets an age param.
+    fetchSpy.mock.calls.forEach(([url]) => expect(String(url)).not.toContain('age='));
+  });
+
+  it('T-AGE-2: species and age combine with AND', async () => {
+    mockApi();
+    renderList('/animals?species=Dog&age=young');
+
+    expect(await screen.findByTestId('empty-message')).toHaveTextContent(
+      'No animals match your search.',
+    );
+  });
+
+  it('T-AGE-3: animals with months or text ages are grouped correctly', async () => {
+    mockApi([
+      { id: 1, name: 'Pip', species: 'Dog', breed: 'Pug', age: '8 weeks', status: 'Available' },
+      { id: 2, name: 'Mo', species: 'Cat', breed: 'Tabby', ageMonths: 30, status: 'Available' },
+      { id: 3, name: 'Gus', species: 'Dog', breed: 'Boxer', age: 11, status: 'Available' },
+      { id: 4, name: 'Nix', species: 'Dog', breed: 'Mutt', age: null, status: 'Available' },
+    ]);
+    renderList('/animals?age=senior');
+
+    await waitFor(() => expect(screen.getAllByTestId('animal-card')).toHaveLength(1));
+    expect(screen.getByText('Gus')).toBeInTheDocument();
   });
 
   it('T-SEARCH-2: a breed with no matches shows the empty message', async () => {
@@ -50,7 +118,7 @@ describe('US-01 Search animals (FR-01, UC-01)', () => {
 
   it('T-SEARCH-4: list is still correct if the server ignores a filter', async () => {
     mockApi(undefined, { ignoreFilters: true });
-    renderList('/animals?species=Cat');
+    renderList('/animals?species=Cat&status=all');
 
     await waitFor(() => expect(screen.getAllByTestId('animal-card')).toHaveLength(2));
     expect(screen.getByText('Luna')).toBeInTheDocument();
@@ -68,11 +136,11 @@ describe('US-01 Search animals (FR-01, UC-01)', () => {
     expect(screen.getByText('Buddy')).toBeInTheDocument();
   });
 
-  it('T-SEARCH-6: an unknown status in the URL is ignored', async () => {
+  it('T-SEARCH-6: an unknown status or age in the URL falls back to the default view', async () => {
     mockApi();
-    renderList('/animals?status=Banana');
+    renderList('/animals?status=Banana&age=ancient');
 
-    await waitFor(() => expect(screen.getAllByTestId('animal-card')).toHaveLength(5));
+    await waitFor(() => expect(screen.getAllByTestId('animal-card')).toHaveLength(3));
   });
 
   it('T-SEARCH-7: works with a MongoDB-shaped response (_id, wrapped, lowercase status)', async () => {
@@ -85,16 +153,16 @@ describe('US-01 Search animals (FR-01, UC-01)', () => {
     expect(within(buddy).getByTestId('status-badge')).toHaveTextContent('Available');
   });
 
-  it('T-SEARCH-8: Clear filters resets the URL and the breed box', async () => {
+  it('T-SEARCH-8: Clear filters returns to all Available animals', async () => {
     mockApi();
-    renderList('/animals?species=Dog&breed=shep');
+    renderList('/animals?species=Dog&breed=shep&status=all');
 
     await waitFor(() => expect(screen.getAllByTestId('animal-card')).toHaveLength(1));
     expect(screen.getByLabelText('Breed')).toHaveValue('shep');
 
     await userEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
 
-    await waitFor(() => expect(screen.getAllByTestId('animal-card')).toHaveLength(5));
+    await waitFor(() => expect(screen.getAllByTestId('animal-card')).toHaveLength(3));
     expect(screen.getByLabelText('Breed')).toHaveValue('');
     expect(screen.getByTestId('location')).toHaveTextContent(/^\/animals$/);
   });
@@ -108,7 +176,7 @@ describe('List error handling', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Database unavailable');
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
 
-    await waitFor(() => expect(screen.getAllByTestId('animal-card')).toHaveLength(5));
+    await waitFor(() => expect(screen.getAllByTestId('animal-card')).toHaveLength(3));
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
@@ -117,7 +185,7 @@ describe('List error handling', () => {
     renderList();
 
     expect(await screen.findByTestId('empty-message')).toHaveTextContent(
-      'There are no animals listed right now',
+      'No animals are currently available for adoption.',
     );
   });
 });

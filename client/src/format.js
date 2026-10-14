@@ -19,6 +19,31 @@ export function formatAge(age, ageMonths) {
   return y === 1 ? '1 year' : `${y} years`;
 }
 
+// Age filter groups (proposal R-03 / US-03). Ranges are in years:
+// min is inclusive, max is exclusive.
+export const AGE_GROUPS = [
+  { value: 'young', label: 'Young (under 2)', min: 0, max: 2 },
+  { value: 'adult', label: 'Adult (2 to 7)', min: 2, max: 8 },
+  { value: 'senior', label: 'Senior (8 and up)', min: 8, max: Infinity },
+];
+
+// Age in years as a number (for the age filter), or null if unknown.
+// Understands 3, 0.5, "3", "8 weeks", "6 months", "2 years" and ageMonths.
+export function ageInYears(age, ageMonths) {
+  if (ageMonths != null && ageMonths !== '' && !Number.isNaN(Number(ageMonths))) {
+    return Number(ageMonths) / 12;
+  }
+  if (age == null || age === '') return null;
+  if (typeof age === 'number') return age >= 0 ? age : null;
+  const m = /^\s*(\d+(?:\.\d+)?)\s*(weeks?|wks?|months?|mos?|years?|yrs?)?\s*$/i.exec(String(age));
+  if (!m) return null;
+  const n = Number(m[1]);
+  const unit = (m[2] || 'y').toLowerCase();
+  if (unit.startsWith('w')) return n / 52;
+  if (unit.startsWith('m')) return n / 12;
+  return n;
+}
+
 // SQLite's CURRENT_TIMESTAMP looks like "2026-10-12 15:00:00" and is UTC.
 // Some browsers (Safari) can't parse that form, so convert it to ISO first.
 export function parseDate(value) {
