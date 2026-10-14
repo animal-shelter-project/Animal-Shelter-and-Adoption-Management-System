@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAuth } from '../auth/useAuth.js';
 import AnimalPhoto from '../components/AnimalPhoto.jsx';
@@ -29,6 +29,8 @@ const STATUS_NOTE = {
 export default function AnimalProfile() {
   const { id } = useParams();
   const { isStaff, isLoggedIn } = useAuth();
+  // Set by the Add Animal form after a successful save.
+  const added = useLocation().state?.added;
   const { data: animal, error, loading, reload } = useResource(
     `animal:${id}`,
     (signal) => api.getAnimal(id, { signal }),
@@ -93,6 +95,19 @@ export default function AnimalProfile() {
       <Link to="/animals" className="back">
         ← All animals
       </Link>
+      {added && (
+        <div className="notice notice-success notice-row" role="status" data-testid="added-notice">
+          <span>
+            {added.name} was added
+            {added.status === ANIMAL_STATUS.AVAILABLE ? ' and is now listed for adoption' : ''}.
+          </span>
+          {isStaff && (
+            <Link to="/staff/animals/new" className="btn">
+              Add another animal
+            </Link>
+          )}
+        </div>
+      )}
       <article className="profile">
         <AnimalPhoto animal={animal} large />
         <div className="profile-body">

@@ -9,18 +9,21 @@ sequenceDiagram
     participant DB as SQLite (animals table)
 
     Adopter->>AL: select Species = "Dog"
-    AL->>AL: updateParam("species", "Dog")<br/>(URL becomes ?species=Dog)
-    AL->>API: listAnimals({ species: "Dog", breed, status })
-    API->>R: GET /api/animals?species=Dog
+    AL->>AL: updateParam("species", "Dog")<br/>(URL becomes ?species=Dog,<br/>no ?status means Available, R-02)
+    AL->>API: listAnimals({ species: "Dog", breed, status: "Available" })
+    API->>R: GET /api/animals?species=Dog&status=Available
     R->>AC: list(req, res)
     AC->>AC: optionalText / optionalStatus<br/>(validate filters, 400 if invalid)
-    AC->>A: findAll({ species: "Dog" })
-    A->>DB: SELECT ... FROM animals<br/>WHERE species = ? COLLATE NOCASE ORDER BY id
+    AC->>A: findAll({ species: "Dog", status: "Available" })
+    A->>DB: SELECT ... FROM animals<br/>WHERE species = ? COLLATE NOCASE<br/>AND status = ? ORDER BY id
     DB-->>A: rows
     A-->>AC: animals[]
     AC-->>R: res.json(animals)
     R-->>API: 200 OK, JSON array
     API-->>AL: normalized animals[]
+    opt an Age group is chosen (R-03)
+        AL->>AL: matchesFilters(animal, { age })<br/>(keep only animals in that age range)
+    end
     alt one or more matches
         AL-->>Adopter: show AnimalCard for each animal, with StatusBadge
     else no matches
