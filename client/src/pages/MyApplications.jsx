@@ -22,6 +22,7 @@ export default function MyApplications() {
     <div className="page narrow">
       <div className="page-head">
         <h1>My applications</h1>
+        <p className="muted">Every animal you’ve applied for, newest first.</p>
       </div>
 
       {loading && (

@@ -2,8 +2,8 @@ const CLASS_BY_STATUS = {
   Available: 'badge-available',
   Pending: 'badge-pending',
   Approved: 'badge-approved',
-  Adopted: 'badge-approved',
-  Fostered: 'badge-neutral',
+  Adopted: 'badge-adopted',
+  Fostered: 'badge-fostered',
   Rejected: 'badge-rejected',
 };
 

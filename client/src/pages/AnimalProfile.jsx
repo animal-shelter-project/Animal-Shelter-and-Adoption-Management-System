@@ -22,7 +22,7 @@ import { ANIMAL_STATUS } from '../normalize.js';
 const STATUS_NOTE = {
   [ANIMAL_STATUS.PENDING]: 'An adoption application for {name} is being reviewed.',
   [ANIMAL_STATUS.APPROVED]: '{name} has been approved for adoption.',
-  [ANIMAL_STATUS.ADOPTED]: '{name} has found a home.',
+  [ANIMAL_STATUS.ADOPTED]: '{name} has found a home. Happy tails!',
   [ANIMAL_STATUS.FOSTERED]: '{name} is currently in foster care.',
 };
 
@@ -96,10 +96,8 @@ export default function AnimalProfile() {
       <article className="profile">
         <AnimalPhoto animal={animal} large />
         <div className="profile-body">
-          <div className="card-title">
-            <h1>{animal.name}</h1>
-            <StatusBadge status={animal.status} />
-          </div>
+          <StatusBadge status={animal.status} />
+          <h1 className="profile-name">{animal.name}</h1>
 
           {facts.length > 0 && (
             <dl className="facts">
@@ -122,6 +120,9 @@ export default function AnimalProfile() {
                   className="btn btn-primary"
                   data-testid="apply-button"
                 >
+                  <svg className="btn-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.6 1.2 4.4 2.6h1.8c.8-1.4 2.3-2.6 4.4-2.6 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z" />
+                  </svg>
                   Apply to adopt {animal.name}
                 </Link>
                 {!isLoggedIn && (
@@ -130,7 +131,10 @@ export default function AnimalProfile() {
               </>
             )}
             {!available && (
-              <p className="muted small" data-testid="not-available-note">
+              <p
+                className={`status-note status-note-${String(animal.status).toLowerCase()}`}
+                data-testid="not-available-note"
+              >
                 {note.replace('{name}', animal.name)}
               </p>
             )}
