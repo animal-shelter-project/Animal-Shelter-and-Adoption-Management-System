@@ -5,6 +5,8 @@
 // ({ animals: [...] } vs [...]) and on casing ("available" vs "Available").
 // Normalizing in one place means no page has to care.
 
+import { AGE_GROUPS, ageInYears } from './format.js';
+
 // ---- Statuses ----------------------------------------------------------------
 
 // Canonical animal statuses = the values the server's database allows
@@ -159,9 +161,15 @@ export function normalizeApplications(data) {
 // The server filters (that's what the sequence diagram shows). We apply the
 // same rules again on the client so the list is still correct if a filter is
 // missing or behaves differently on the server (e.g. exact vs partial breed).
-export function matchesFilters(animal, { species, breed, status } = {}) {
+export function matchesFilters(animal, { species, breed, status, age } = {}) {
   if (species && squash(animal.species) !== squash(species)) return false;
   if (breed && !animal.breed.toLowerCase().includes(String(breed).trim().toLowerCase())) return false;
   if (status && animal.status !== canonicalAnimalStatus(status)) return false;
+  if (age) {
+    const group = AGE_GROUPS.find((g) => g.value === age);
+    const years = ageInYears(animal.age, animal.ageMonths);
+    // An animal with an unknown age doesn't match a specific age group.
+    if (group && (years == null || years < group.min || years >= group.max)) return false;
+  }
   return true;
 }
