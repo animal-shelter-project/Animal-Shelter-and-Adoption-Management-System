@@ -1,26 +1,11 @@
 const express = require("express");
-const db = require("../db");
+const AnimalController = require("../controllers/AnimalController");
 
 const router = express.Router();
 
-router.get("/", (req, res) => {
-  try {
-    const animals = db
-      .prepare(`
-        SELECT id, name, species, breed, age, status, created_at
-        FROM animals
-        WHERE status = 'Available'
-        ORDER BY id
-      `)
-      .all();
-
-    res.json(animals);
-  } catch (error) {
-    console.error("Unable to retrieve animals:", error);
-    res.status(500).json({
-      error: "Unable to retrieve animals.",
-    });
-  }
-});
+router.get("/", AnimalController.list);
+router.get("/:id", AnimalController.getById);
+// M3 (US-06) adds: router.post("/", requireAuth, requireRole("Staff"), ...)
+//                  router.put("/:id", requireAuth, requireRole("Staff"), ...)
 
 module.exports = router;
