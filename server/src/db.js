@@ -2,14 +2,22 @@ const fs = require("fs");
 const path = require("path");
 const Database = require("better-sqlite3");
 
-const dataDirectory = path.join(__dirname, "..", "data");
-fs.mkdirSync(dataDirectory, { recursive: true });
+require("./config"); // loads server/.env before DB_PATH is read
 
-const databasePath = path.join(dataDirectory, "shelter.db");
+// DB_PATH lets tests use an in-memory database (DB_PATH=":memory:").
+const databasePath =
+  process.env.DB_PATH || path.join(__dirname, "..", "data", "shelter.db");
+
+if (databasePath !== ":memory:") {
+  fs.mkdirSync(path.dirname(databasePath), { recursive: true });
+}
+
 const db = new Database(databasePath);
 
 db.pragma("foreign_keys = ON");
-db.pragma("journal_mode = WAL");
+if (databasePath !== ":memory:") {
+  db.pragma("journal_mode = WAL");
+}
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
@@ -41,6 +49,9 @@ db.exec(`
     FOREIGN KEY (animal_id) REFERENCES animals(id),
     FOREIGN KEY (applicant_id) REFERENCES users(id)
   );
+
+  CREATE INDEX IF NOT EXISTS idx_applications_applicant ON applications(applicant_id);
+  CREATE INDEX IF NOT EXISTS idx_animals_status ON animals(status);
 `);
 
 module.exports = db;
