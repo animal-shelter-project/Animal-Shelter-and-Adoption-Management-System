@@ -17,6 +17,8 @@
 //                       (default 7200 = 2 h, as in the plan)
 //   PORT=4000
 //
+// Staff can add animals: POST /api/animals (Add animal page).
+//
 // Extra dev-only endpoint to demo the status refresh (FR-08):
 //   curl -X POST localhost:4000/api/mock/status -H "Content-Type: application/json" \
 //        -d '{"id":1,"status":"Adopted"}'
@@ -129,6 +131,34 @@ const server = http.createServer(async (req, res) => {
     const animal = findAnimal(key);
     if (!animal) return send(res, 404, { error: 'Animal not found' });
     return send(res, 200, MONGO ? { animal: outAnimal(animal) } : outAnimal(animal));
+  }
+
+  // Staff add an animal (proposal R-01 / US-01). Same rules as the real server.
+  if (req.method === 'POST' && path === '/api/animals') {
+    const user = userFromToken(req);
+    if (!user) return send(res, 401, { error: 'Please log in to continue.' });
+    if (user.role !== 'Staff') return send(res, 403, { error: "You don't have permission to do that." });
+    const body = await readBody(req);
+    const fields = {};
+    const text = (k, label, max) => {
+      const v = typeof body[k] === 'string' ? body[k].trim().replace(/\s+/g, ' ') : '';
+      if (!v) fields[k] = `${label} is required.`;
+      else if (v.length > max) fields[k] = `${label} must be ${max} characters or fewer.`;
+      return v;
+    };
+    const name = text('name', 'Name', 60);
+    const species = text('species', 'Species', 40);
+    const breed = text('breed', 'Breed', 60);
+    const age = Number(String(body.age ?? '').trim());
+    if (String(body.age ?? '').trim() === '' || !Number.isInteger(age) || age < 0 || age > 40) {
+      fields.age = 'Age must be a whole number of years, 0 or more.';
+    }
+    const status = body.status || 'Available';
+    if (!['Available', 'Pending', 'Adopted', 'Fostered'].includes(status)) fields.status = 'Unknown status.';
+    if (Object.keys(fields).length) return send(res, 400, { error: 'Please fix the highlighted fields.', fields });
+    const animal = { id: Math.max(...animals.map((a) => a.id)) + 1, name, species, breed, age, status };
+    animals.push(animal);
+    return send(res, 201, MONGO ? { animal: outAnimal(animal) } : outAnimal(animal));
   }
 
   if (req.method === 'POST' && path === '/api/auth/login') {

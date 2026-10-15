@@ -220,6 +220,14 @@ export const api = {
     return { token, user };
   },
 
+  // Staff only (proposal R-01 / US-01). Returns the new animal.
+  createAnimal: async (animal, opts) => {
+    const data = await request('/animals', { ...opts, method: 'POST', body: animal });
+    const created = normalizeAnimal(unwrapOne(data, 'animal'));
+    if (!created?.id) throw new ApiError(500, 'Unexpected response from the server.');
+    return created;
+  },
+
   myApplications: async (opts) =>
     normalizeApplications(await request('/applications/mine', opts)),
 };

@@ -47,15 +47,17 @@ function hash(value) {
 
 export const BACKDROPS = ['#FFE7A0', '#FFD3E0', '#C8F0DC', '#CFE5FA', '#E3D9FB'];
 
+// Colours come from the name (not the database id), so the Add Animal preview
+// matches the saved animal exactly.
 export function backdropFor(animal) {
-  return BACKDROPS[hash(animal?.id ?? animal?.name) % BACKDROPS.length];
+  return BACKDROPS[hash(animal?.name ?? animal?.id) % BACKDROPS.length];
 }
 
 export function lookFor(animal, kind) {
   const breed = String(animal?.breed || '').toLowerCase();
   const match = BREEDS.find(([key]) => breed.includes(key));
   const base = COATS[kind] || COATS.dog;
-  const fallback = base[hash(animal?.id ?? animal?.name) % base.length];
+  const fallback = base[hash(animal?.name ?? animal?.id) % base.length];
   return { ...fallback, ...(match ? match[1] : {}) };
 }
 
