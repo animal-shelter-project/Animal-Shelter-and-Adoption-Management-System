@@ -42,6 +42,35 @@ class Animal {
   static findById(id) {
     return db.prepare(`SELECT ${COLUMNS} FROM animals WHERE id = ?`).get(id);
   }
+
+  // Insert a new animal into the database, then return the saved row.
+  static create({ name, species, breed, age, status }) {
+    const result = db
+      .prepare(
+        `INSERT INTO animals (name, species, breed, age, status)
+         VALUES (@name, @species, @breed, @age, @status)`,
+      )
+      .run({ name, species, breed, age, status });
+
+    // SQLite returns the new row's ID; look it up to return the same shape
+    // used by findAll and findById.
+    return Animal.findById(Number(result.lastInsertRowid));
+  }
+
+  // Replace an animal's editable fields, then return the updated row.
+  static updateById(id, { name, species, breed, age, status }) {
+    db.prepare(
+      `UPDATE animals
+       SET name = @name,
+           species = @species,
+           breed = @breed,
+           age = @age,
+           status = @status
+       WHERE id = @id`,
+    ).run({ id, name, species, breed, age, status });
+
+    return Animal.findById(id);
+  }
 }
 
 module.exports = Animal;
