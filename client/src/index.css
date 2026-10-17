@@ -264,6 +264,28 @@ a.card:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--ink)
 .empty .btn { margin-top: 0.75rem; }
 .placeholder h1, .empty h1 { margin-bottom: 0.25rem; }
 
+/* ---------- Add animal (staff) ---------- */
+.add-layout { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(240px, 1fr); gap: 2rem; align-items: start; }
+.form-card {
+  background: var(--paper); border: var(--line); border-radius: var(--radius);
+  padding: 1.6rem 1.6rem 1.8rem; box-shadow: var(--pop); display: flex; flex-direction: column; gap: 1.1rem;
+}
+.field { display: flex; flex-direction: column; gap: 0.35rem; flex: 1; min-width: 0; }
+.field label { font-size: 0.9rem; font-weight: 700; }
+.field input, .field select { min-width: 0; width: 100%; }
+.field-row { display: flex; gap: 1rem; flex-wrap: wrap; }
+.field-row .field { flex: 1 1 180px; }
+.field [aria-invalid='true'] { border-color: var(--danger-text); background: #fff6f8; }
+.field-error { color: var(--danger-text); font-size: 0.85rem; font-weight: 600; }
+.preview { position: sticky; top: 1.5rem; }
+.preview-label { font-weight: 700; color: var(--ink-soft); margin-bottom: 0.6rem; }
+.preview-card { pointer-events: none; }
+.notice-success { background: #c9f2dd; color: #0d6138; }
+@media (max-width: 760px) {
+  .add-layout { grid-template-columns: 1fr; }
+  .preview { position: static; max-width: 320px; }
+}
+
 /* ---------- Login ---------- */
 .auth-page { padding-top: 6.5rem; }
 .auth-card {
