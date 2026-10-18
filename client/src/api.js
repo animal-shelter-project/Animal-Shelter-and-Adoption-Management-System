@@ -7,6 +7,7 @@ import {
   normalizeAnimal,
   normalizeAnimals,
   normalizeApplications,
+  normalizeHistory,
   normalizeUser,
   unwrapOne,
 } from './normalize.js';
@@ -226,6 +227,22 @@ export const api = {
     const created = normalizeAnimal(unwrapOne(data, 'animal'));
     if (!created?.id) throw new ApiError(500, 'Unexpected response from the server.');
     return created;
+  },
+
+  // Staff only (proposal R-09). Oldest first.
+  getAnimalHistory: async (id, opts) =>
+    normalizeHistory(await request(`/animals/${encodeURIComponent(id)}/history`, opts)),
+
+  // Staff only (proposal R-09 / R-12). Returns the updated animal.
+  changeAnimalStatus: async (id, status, note, opts) => {
+    const data = await request(`/animals/${encodeURIComponent(id)}/status`, {
+      ...opts,
+      method: 'PATCH',
+      body: note ? { status, note } : { status },
+    });
+    const animal = normalizeAnimal(unwrapOne(data, 'animal'));
+    if (!animal?.id) throw new ApiError(500, 'Unexpected response from the server.');
+    return animal;
   },
 
   myApplications: async (opts) =>

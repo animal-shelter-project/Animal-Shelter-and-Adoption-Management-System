@@ -1,10 +1,13 @@
 const Animal = require("../models/Animal");
 const HttpError = require("../utils/HttpError");
+const StatusHistory = require("../models/StatusHistory");
+const { changeStatus, updateDetails } = require("../services/AnimalStatusService");
 const {
   parseId,
   optionalText,
   optionalStatus,
   MAX_FILTER_LENGTH,
+  validateStatusChange,
 } = require("../utils/validation");
 
 // Require a JSON object for POST and PUT request bodies.
@@ -113,7 +116,7 @@ class AnimalController {
       age: readAge(body.age, 0),
       // New animals are Available unless a valid status is supplied.
       status: readStatus(body.status, "Available"),
-    });
+    }, { changedBy: req.user.id }); // also starts its status history (R-09)
 
     // 201 means the resource was successfully created.
     res.status(201).json(animal);
@@ -129,7 +132,8 @@ class AnimalController {
 
     const body = requireBody(req);
 
-    const animal = Animal.updateById(id, {
+    // A status change made here is checked and logged like any other (R-09).
+    const animal = updateDetails(id, {
       // Name and species are required on every update request.
       name: requiredText(body.name, "name"),
       species: requiredText(body.species, "species"),
@@ -137,8 +141,26 @@ class AnimalController {
       breed: readBreed(body.breed, current.breed),
       age: readAge(body.age, current.age),
       status: readStatus(body.status, current.status),
-    });
+    }, { changedBy: req.user.id });
 
+    res.json(animal);
+  }
+
+  // GET /api/animals/:id/history   (proposal R-09 / US-09; Staff only)
+  // Oldest first: [{ id, fromStatus, toStatus, note, changedAt, changedBy }]
+  static history(req, res) {
+    const id = parseId(req.params.id, "animal id");
+    if (!Animal.findById(id)) throw new HttpError(404, "Animal not found.");
+    res.json(StatusHistory.forAnimal(id));
+  }
+
+  // PATCH /api/animals/:id/status   (proposal R-09, R-12; Staff only)
+  // Body { status, note? }. 200 with the updated animal; 409 if the change
+  // isn't allowed (e.g. the animal has an application under review).
+  static changeStatus(req, res) {
+    const id = parseId(req.params.id, "animal id");
+    const { status, note } = validateStatusChange(req.body);
+    const animal = changeStatus(id, status, { changedBy: req.user.id, note, manual: true });
     res.json(animal);
   }
 }

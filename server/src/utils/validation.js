@@ -37,4 +37,38 @@ function optionalStatus(value) {
   return match;
 }
 
-module.exports = { parseId, optionalText, optionalStatus, MAX_FILTER_LENGTH };
+// PATCH /api/animals/:id/status body: { status, note? } (R-09 / R-12).
+const MAX_NOTE = 200;
+function validateStatusChange(body) {
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    throw new HttpError(400, "Send the change as a JSON object.");
+  }
+  const status =
+    typeof body.status === "string" &&
+    ANIMAL_STATUSES.find((s) => s.toLowerCase() === body.status.trim().toLowerCase());
+  if (!status) {
+    throw new HttpError(400, `Status must be one of: ${ANIMAL_STATUSES.join(", ")}.`, {
+      fields: { status: "Choose a status." },
+    });
+  }
+  let note = null;
+  if (body.note !== undefined && body.note !== null && body.note !== "") {
+    if (typeof body.note !== "string") throw new HttpError(400, "Note must be text.", { fields: { note: "Note must be text." } });
+    note = body.note.trim().replace(/\s+/g, " ") || null;
+    if (note && note.length > MAX_NOTE) {
+      throw new HttpError(400, `Note must be ${MAX_NOTE} characters or fewer.`, {
+        fields: { note: `Note must be ${MAX_NOTE} characters or fewer.` },
+      });
+    }
+  }
+  return { status, note };
+}
+
+module.exports = {
+  parseId,
+  optionalText,
+  optionalStatus,
+  MAX_FILTER_LENGTH,
+  validateStatusChange,
+  MAX_NOTE,
+};

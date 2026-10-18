@@ -1,4 +1,5 @@
 const db = require("../db");
+const StatusHistory = require("./StatusHistory");
 
 const COLUMNS = `
   id, name, species, breed, age, status, created_at AS createdAt
@@ -44,33 +45,44 @@ class Animal {
   }
 
   // Insert a new animal into the database, then return the saved row.
-  static create({ name, species, breed, age, status }) {
-    const result = db
-      .prepare(
-        `INSERT INTO animals (name, species, breed, age, status)
-         VALUES (@name, @species, @breed, @age, @status)`,
-      )
-      .run({ name, species, breed, age, status });
-
-    // SQLite returns the new row's ID; look it up to return the same shape
-    // used by findAll and findById.
-    return Animal.findById(Number(result.lastInsertRowid));
+  // Also starts its status history (R-09) in the same transaction, so an
+  // animal never exists without its first history entry.
+  static create({ name, species, breed, age, status }, { changedBy = null } = {}) {
+    return createWithHistory({ name, species, breed, age, status }, changedBy);
   }
 
-  // Replace an animal's editable fields, then return the updated row.
-  static updateById(id, { name, species, breed, age, status }) {
+  // Only AnimalStatusService calls this, so every status change is recorded
+  // in the status history.
+  static setStatus(id, status) {
+    db.prepare("UPDATE animals SET status = ? WHERE id = ?").run(status, id);
+  }
+
+  // Replace an animal's details (not its status), then return the updated row.
+  // Status changes go through AnimalStatusService so they are checked and logged.
+  static updateDetails(id, { name, species, breed, age }) {
     db.prepare(
       `UPDATE animals
        SET name = @name,
            species = @species,
            breed = @breed,
-           age = @age,
-           status = @status
+           age = @age
        WHERE id = @id`,
-    ).run({ id, name, species, breed, age, status });
+    ).run({ id, name, species, breed, age });
 
     return Animal.findById(id);
   }
 }
+
+const createWithHistory = db.transaction((animal, changedBy) => {
+  const { lastInsertRowid } = db
+    .prepare(
+      "INSERT INTO animals (name, species, breed, age, status) VALUES (@name, @species, @breed, @age, @status)",
+    )
+    .run(animal);
+  StatusHistory.record({ animalId: lastInsertRowid, toStatus: animal.status, changedBy, note: "Added to the shelter" });
+  // SQLite returns the new row's ID; look it up to return the same shape
+  // used by findAll and findById.
+  return Animal.findById(Number(lastInsertRowid));
+});
 
 module.exports = Animal;
