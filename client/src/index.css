@@ -286,6 +286,25 @@ a.card:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--ink)
   .preview { position: static; max-width: 320px; }
 }
 
+/* ---------- Staff status panel (R-09) ---------- */
+.staff-panel {
+  margin-top: 2.25rem; background: var(--paper); border: var(--line); border-radius: var(--radius);
+  padding: 1.5rem 1.6rem 1.7rem; box-shadow: var(--pop);
+}
+.staff-panel h2 { font-size: 1.6rem; margin-bottom: 1rem; }
+.staff-panel-sub { margin: 1.6rem 0 0.8rem; font-size: 1.15rem; }
+.timeline { list-style: none; margin: 0; padding: 0 0 0 1.1rem; border-left: 3px dashed #d9d4e6; }
+.timeline li { position: relative; padding: 0 0 1rem 0.9rem; }
+.timeline li:last-child { padding-bottom: 0; }
+.timeline li::before {
+  content: ''; position: absolute; left: -1.62rem; top: 0.3rem; width: 0.9rem; height: 0.9rem;
+  border-radius: 50%; background: var(--sun); border: 2px solid var(--ink);
+}
+.timeline-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; }
+.timeline-note { margin-top: 0.3rem; }
+.status-form { display: flex; flex-direction: column; gap: 0.9rem; align-items: flex-start; }
+.status-form .field-row { width: 100%; }
+
 /* ---------- Login ---------- */
 .auth-page { padding-top: 6.5rem; }
 .auth-card {

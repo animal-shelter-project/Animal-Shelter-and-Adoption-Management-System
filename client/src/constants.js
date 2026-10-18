@@ -17,6 +17,16 @@ export const ALL_STATUSES = 'all';
 // Age filter groups live in format.js (next to the age parsing).
 export { AGE_GROUPS } from './format.js';
 
+// Status changes staff can make by hand (proposal R-09 / R-12). Mirrors
+// allowedManualChanges in server/src/services/AnimalStatusService.js.
+// Pending is left to the application workflow (submit / approve / reject).
+export const MANUAL_STATUS_CHANGES = {
+  [ANIMAL_STATUS.AVAILABLE]: [ANIMAL_STATUS.FOSTERED, ANIMAL_STATUS.ADOPTED],
+  [ANIMAL_STATUS.FOSTERED]: [ANIMAL_STATUS.AVAILABLE, ANIMAL_STATUS.ADOPTED],
+  [ANIMAL_STATUS.ADOPTED]: [ANIMAL_STATUS.AVAILABLE],
+  [ANIMAL_STATUS.PENDING]: [],
+};
+
 // Default species options. Any other species found in the data is added to
 // the dropdown automatically, so a new species never becomes unfilterable.
 export const SPECIES = ['Dog', 'Cat', 'Rabbit', 'Bird', 'Other'];

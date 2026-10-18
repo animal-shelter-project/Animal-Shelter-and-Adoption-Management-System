@@ -55,6 +55,7 @@ export function mockApi(animals = ANIMALS, { shape = 'sqlite', ignoreFilters = f
         .map(out);
       return jsonResponse(200, mongo ? { animals: list } : list);
     }
+    if (/^\/animals\/[^/]+\/history$/.test(path)) return jsonResponse(200, []);
     const m = /^\/animals\/(.+)$/.exec(path);
     if (m) {
       const key = decodeURIComponent(m[1]);

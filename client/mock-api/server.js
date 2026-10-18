@@ -46,6 +46,26 @@ const animals = [
   { id: 6, name: 'Bella', species: 'Rabbit', breed: 'Holland Lop', age: 1, status: 'Fostered' },
 ];
 
+// Status history (R-09), oldest first. Mirrors server/src/seed.js.
+const ago = (d) => new Date(Date.now() - d * 864e5).toISOString().slice(0, 19).replace('T', ' ');
+let historyId = 0;
+const history = [];
+const addHistory = (animalId, fromStatus, toStatus, note, changedAt = ago(0)) =>
+  history.push({ id: ++historyId, animalId, fromStatus, toStatus, note, changedAt, changedBy: 'staff@shelter.test' });
+for (const [id, steps] of Object.entries({
+  1: [['Available', 30, 'Added to the shelter']],
+  2: [['Available', 25, 'Added to the shelter']],
+  3: [['Available', 28, 'Added to the shelter'], ['Pending', 4, 'Adoption application submitted']],
+  4: [['Available', 40, 'Added to the shelter'], ['Pending', 16, 'Adoption application submitted'], ['Adopted', 13, 'Application approved']],
+  5: [['Available', 10, 'Added to the shelter']],
+  6: [['Available', 21, 'Added to the shelter'], ['Fostered', 7, 'Went to a foster home']],
+})) {
+  let from = null;
+  for (const [to, days, note] of steps) { addHistory(Number(id), from, to, note, ago(days)); from = to; }
+}
+// Same rules as server/src/services/AnimalStatusService.js (manual changes).
+const MANUAL = { Available: ['Fostered', 'Adopted'], Fostered: ['Available', 'Adopted'], Adopted: ['Available'], Pending: [] };
+
 const applications = [
   { id: 1, animalId: 4, adopterId: 2, status: 'Approved', submittedAt: '2026-10-01 10:00:00' },
   { id: 2, animalId: 3, adopterId: 2, status: 'Pending', submittedAt: '2026-10-10 10:00:00' },
@@ -88,7 +108,7 @@ function send(res, status, body) {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, OPTIONS',
     });
     res.end(body === undefined ? '' : JSON.stringify(body));
   }, status === 204 ? 0 : DELAY);
@@ -122,6 +142,29 @@ const server = http.createServer(async (req, res) => {
         (!status || a.status.toLowerCase() === status.toLowerCase()),
     ).map(outAnimal);
     return send(res, 200, MONGO ? { animals: result, count: result.length } : result);
+  }
+
+  // Staff: status history and status changes (R-09 / R-12).
+  const hist = /^\/api\/animals\/([^/]+)\/(history|status)$/.exec(path);
+  if (hist && ((req.method === 'GET' && hist[2] === 'history') || (req.method === 'PATCH' && hist[2] === 'status'))) {
+    const user = userFromToken(req);
+    if (!user) return send(res, 401, { error: 'Please log in to continue.' });
+    if (user.role !== 'Staff') return send(res, 403, { error: "You don't have permission to do that." });
+    const animal = findAnimal(decodeURIComponent(hist[1]));
+    if (!animal) return send(res, 404, { error: 'Animal not found.' });
+    if (hist[2] === 'history') {
+      return send(res, 200, history.filter((h) => h.animalId === animal.id).map((h) => { const copy = { ...h }; delete copy.animalId; return copy; }));
+    }
+    const { status, note } = await readBody(req);
+    if (animal.status === 'Pending') {
+      return send(res, 409, { error: `${animal.name} has an adoption application under review. Approve or reject the application instead.` });
+    }
+    if (!MANUAL[animal.status].includes(status)) {
+      return send(res, 409, { error: `${animal.name} can't go from ${animal.status} to ${status}.` });
+    }
+    addHistory(animal.id, animal.status, status, typeof note === 'string' && note.trim() ? note.trim() : null);
+    animal.status = status;
+    return send(res, 200, MONGO ? { animal: outAnimal(animal) } : outAnimal(animal));
   }
 
   const one = /^\/api\/animals\/([^/]+)$/.exec(path);
@@ -158,6 +201,7 @@ const server = http.createServer(async (req, res) => {
     if (Object.keys(fields).length) return send(res, 400, { error: 'Please fix the highlighted fields.', fields });
     const animal = { id: Math.max(...animals.map((a) => a.id)) + 1, name, species, breed, age, status };
     animals.push(animal);
+    addHistory(animal.id, null, animal.status, 'Added to the shelter');
     return send(res, 201, MONGO ? { animal: outAnimal(animal) } : outAnimal(animal));
   }
 

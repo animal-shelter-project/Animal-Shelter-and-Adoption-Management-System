@@ -13,7 +13,7 @@ const hash = bcrypt.hashSync(PASSWORD, 4); // low cost: fast tests
 
 function resetData() {
   db.exec(`
-    DELETE FROM applications; DELETE FROM animals; DELETE FROM users;
+    DELETE FROM status_history; DELETE FROM applications; DELETE FROM animals; DELETE FROM users;
     DELETE FROM sqlite_sequence;
   `);
   const user = db.prepare("INSERT INTO users (email, password_hash, role) VALUES (?, ?, ?)");

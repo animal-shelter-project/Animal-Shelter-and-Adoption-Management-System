@@ -1,5 +1,31 @@
 const bcrypt = require("bcrypt");
 const db = require("./db");
+const StatusHistory = require("./models/StatusHistory");
+
+// "YYYY-MM-DD HH:MM:SS" (UTC, like SQLite's CURRENT_TIMESTAMP), `days` ago.
+const daysAgo = (days) =>
+  new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().slice(0, 19).replace("T", " ");
+
+// Status history for the demo animals (proposal R-09): each list is the
+// animal's journey, oldest first, as [status, days ago, note].
+const HISTORY = {
+  Buddy: [["Available", 30, "Added to the shelter"]],
+  Luna: [["Available", 25, "Added to the shelter"]],
+  Max: [
+    ["Available", 28, "Added to the shelter"],
+    ["Pending", 4, "Adoption application submitted"],
+  ],
+  Daisy: [
+    ["Available", 40, "Added to the shelter"],
+    ["Pending", 16, "Adoption application submitted"],
+    ["Adopted", 13, "Application approved"],
+  ],
+  Charlie: [["Available", 10, "Added to the shelter"]],
+  Bella: [
+    ["Available", 21, "Added to the shelter"],
+    ["Fostered", 7, "Went to a foster home"],
+  ],
+};
 
 // Demo data covering every status, so search filters, the status badges and
 // the Apply rule (FR-01, FR-02, FR-08) can all be shown right after seeding.
@@ -43,12 +69,13 @@ const seedDatabase = async () => {
   `);
 
   const seed = db.transaction(() => {
+    db.prepare("DELETE FROM status_history").run();
     db.prepare("DELETE FROM applications").run();
     db.prepare("DELETE FROM animals").run();
     db.prepare("DELETE FROM users").run();
     // Restart ids at 1 so /animals/1 is always Buddy after a re-seed.
     db.prepare(
-      "DELETE FROM sqlite_sequence WHERE name IN ('applications', 'animals', 'users')",
+      "DELETE FROM sqlite_sequence WHERE name IN ('status_history', 'applications', 'animals', 'users')",
     ).run();
 
     const userIds = {};
@@ -59,6 +86,22 @@ const seedDatabase = async () => {
     const animalIds = {};
     for (const animal of animals) {
       animalIds[animal.name] = insertAnimal.run(animal).lastInsertRowid;
+    }
+
+    const staffId = userIds["staff@shelter.test"];
+    for (const [name, steps] of Object.entries(HISTORY)) {
+      let fromStatus = null;
+      for (const [toStatus, days, note] of steps) {
+        StatusHistory.record({
+          animalId: animalIds[name],
+          fromStatus,
+          toStatus,
+          changedBy: staffId,
+          note,
+          changedAt: daysAgo(days),
+        });
+        fromStatus = toStatus;
+      }
     }
 
     for (const application of applications) {

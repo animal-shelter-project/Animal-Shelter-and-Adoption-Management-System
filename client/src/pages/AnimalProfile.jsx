@@ -2,6 +2,7 @@ import { Link, useLocation, useParams } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAuth } from '../auth/useAuth.js';
 import AnimalPhoto from '../components/AnimalPhoto.jsx';
+import StaffStatusPanel from '../components/StaffStatusPanel.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import { canApply } from '../constants.js';
 import { formatAge, formatDate } from '../format.js';
@@ -31,7 +32,7 @@ export default function AnimalProfile() {
   const { isStaff, isLoggedIn } = useAuth();
   // Set by the Add Animal form after a successful save.
   const added = useLocation().state?.added;
-  const { data: animal, error, loading, reload } = useResource(
+  const { data: animal, error, loading, reload, refresh } = useResource(
     `animal:${id}`,
     (signal) => api.getAnimal(id, { signal }),
     { pollMs: 30000 },
@@ -161,6 +162,7 @@ export default function AnimalProfile() {
           </div>
         </div>
       </article>
+      {isStaff && <StaffStatusPanel animal={animal} onChanged={refresh} />}
     </div>
   );
 }

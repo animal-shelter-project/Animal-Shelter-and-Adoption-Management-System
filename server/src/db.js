@@ -50,7 +50,22 @@ db.exec(`
     FOREIGN KEY (applicant_id) REFERENCES users(id)
   );
 
+  -- Proposal R-09: every status change, with who made it and when.
+  -- from_status is NULL for the first entry (the animal was added).
+  CREATE TABLE IF NOT EXISTS status_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    animal_id INTEGER NOT NULL REFERENCES animals(id) ON DELETE CASCADE,
+    from_status TEXT
+      CHECK (from_status IS NULL OR from_status IN ('Available', 'Pending', 'Adopted', 'Fostered')),
+    to_status TEXT NOT NULL
+      CHECK (to_status IN ('Available', 'Pending', 'Adopted', 'Fostered')),
+    changed_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    note TEXT,
+    changed_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+
   CREATE INDEX IF NOT EXISTS idx_applications_applicant ON applications(applicant_id);
+  CREATE INDEX IF NOT EXISTS idx_status_history_animal ON status_history(animal_id, id);
   CREATE INDEX IF NOT EXISTS idx_animals_status ON animals(status);
 `);
 

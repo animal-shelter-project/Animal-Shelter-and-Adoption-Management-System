@@ -153,6 +153,24 @@ export function normalizeApplication(raw) {
   };
 }
 
+// One status-history entry (R-09): { id, fromStatus, toStatus, note, changedAt, changedBy }.
+export function normalizeHistoryEntry(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const from = raw.fromStatus ?? raw.from_status ?? null;
+  return {
+    id: pickId({ id: raw.id ?? raw._id }),
+    fromStatus: from ? canonicalAnimalStatus(from) : null,
+    toStatus: canonicalAnimalStatus(raw.toStatus ?? raw.to_status),
+    note: cleanText(raw.note) || null,
+    changedAt: raw.changedAt ?? raw.changed_at ?? null,
+    changedBy: cleanText(raw.changedBy ?? raw.changed_by) || null,
+  };
+}
+
+export function normalizeHistory(data) {
+  return unwrapList(data, 'history').map(normalizeHistoryEntry).filter((h) => h?.toStatus);
+}
+
 export function normalizeApplications(data) {
   return unwrapList(data, 'applications').map(normalizeApplication).filter(Boolean);
 }
