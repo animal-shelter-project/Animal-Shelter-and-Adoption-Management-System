@@ -1,8 +1,9 @@
+
 // Shared API helper used by every page (M1, M2 and M3).
 // request(path, options) prefixes BASE, sends JSON, adds
 // "Authorization: Bearer <token>" when logged in, applies a timeout, and
 // turns every failure into an ApiError with a readable message and .status.
-
+ 
 import {
   normalizeAnimal,
   normalizeAnimals,
@@ -11,16 +12,16 @@ import {
   normalizeUser,
   unwrapOne,
 } from './normalize.js';
-
+ 
 const RAW_BASE = import.meta.env?.VITE_API_URL || 'http://localhost:4000/api';
 export const BASE = RAW_BASE.replace(/\/+$/, ''); // tolerate a trailing slash in .env
-
+ 
 export const DEFAULT_TIMEOUT_MS = 10000;
 const STORAGE_KEY = 'shelter.auth';
 export const AUTH_EXPIRED_EVENT = 'shelter:auth-expired';
-
+ 
 // ---- JWT expiry (read-only decode; the server still verifies the signature) --
-
+ 
 export function tokenExpiry(token) {
   try {
     const payload = token.split('.')[1];
@@ -31,14 +32,14 @@ export function tokenExpiry(token) {
     return null; // not a JWT (e.g. mock token): rely on the server's 401
   }
 }
-
+ 
 export function isTokenExpired(token, now = Date.now()) {
   const exp = tokenExpiry(token);
   return exp != null && exp <= now;
 }
-
+ 
 // ---- Saved login (token + user) --------------------------------------------
-
+ 
 export function loadAuth() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -53,7 +54,7 @@ export function loadAuth() {
     return null;
   }
 }
-
+ 
 export function saveAuth(auth) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(auth));
@@ -61,7 +62,7 @@ export function saveAuth(auth) {
     /* storage blocked (private mode): login still works until refresh */
   }
 }
-
+ 
 export function clearAuth() {
   try {
     localStorage.removeItem(STORAGE_KEY);
@@ -69,15 +70,15 @@ export function clearAuth() {
     /* ignore */
   }
 }
-
+ 
 export const AUTH_STORAGE_KEY = STORAGE_KEY;
-
+ 
 export function getToken() {
   return loadAuth()?.token || null;
 }
-
+ 
 // ---- Errors -----------------------------------------------------------------
-
+ 
 export class ApiError extends Error {
   constructor(status, message, body) {
     super(message);
@@ -86,7 +87,7 @@ export class ApiError extends Error {
     this.body = body;
   }
 }
-
+ 
 const FRIENDLY = {
   0: 'Cannot reach the server. Check that the API is running, then try again.',
   401: 'Please log in to continue.',
@@ -96,7 +97,7 @@ const FRIENDLY = {
   429: 'Too many requests. Please wait a moment and try again.',
   500: 'The server had a problem. Please try again.',
 };
-
+ 
 function messageFrom(status, data) {
   if (data && typeof data === 'object') {
     const m = data.error ?? data.message ?? data.msg;
@@ -108,22 +109,22 @@ function messageFrom(status, data) {
   }
   return FRIENDLY[status] || (status >= 500 ? FRIENDLY[500] : `Request failed (${status}).`);
 }
-
+ 
 // ---- Core helper ------------------------------------------------------------
-
+ 
 export async function request(path, options = {}) {
   const { timeout = DEFAULT_TIMEOUT_MS, auth = true, signal, ...fetchOptions } = options;
   const headers = { Accept: 'application/json', ...(fetchOptions.headers || {}) };
-
+ 
   const token = auth ? getToken() : null;
   if (token) headers.Authorization = `Bearer ${token}`;
-
+ 
   let body = fetchOptions.body;
   if (body !== undefined && body !== null && typeof body !== 'string' && !(body instanceof FormData)) {
     body = JSON.stringify(body);
     headers['Content-Type'] = 'application/json';
   }
-
+ 
   // Combine the caller's AbortSignal (page unmounted / filter changed)
   // with our own timeout.
   const controller = new AbortController();
@@ -137,7 +138,7 @@ export async function request(path, options = {}) {
     if (signal.aborted) controller.abort();
     else signal.addEventListener('abort', onCallerAbort, { once: true });
   }
-
+ 
   let res;
   try {
     res = await fetch(`${BASE}${path.startsWith('/') ? path : `/${path}`}`, {
@@ -154,7 +155,7 @@ export async function request(path, options = {}) {
     clearTimeout(timer);
     signal?.removeEventListener?.('abort', onCallerAbort);
   }
-
+ 
   let text = '';
   try {
     text = await res.text();
@@ -169,7 +170,7 @@ export async function request(path, options = {}) {
       data = text; // e.g. an HTML error page from a proxy
     }
   }
-
+ 
   if (!res.ok) {
     // A protected call with our token was rejected: the session is over.
     if (res.status === 401 && token) {
@@ -180,12 +181,12 @@ export async function request(path, options = {}) {
   }
   return data;
 }
-
+ 
 // Treat "aborted because the page moved on" as a non-error.
 export const isAbort = (err) => err?.name === 'AbortError';
-
+ 
 // ---- Small helpers used by the catalog pages ---------------------------------
-
+ 
 // Builds "?species=Dog&status=Available", skipping empty values.
 export function buildQuery(params = {}) {
   const qs = new URLSearchParams();
@@ -197,18 +198,18 @@ export function buildQuery(params = {}) {
   const s = qs.toString();
   return s ? `?${s}` : '';
 }
-
+ 
 export const api = {
   listAnimals: async (filters, opts) =>
     normalizeAnimals(await request(`/animals${buildQuery(filters)}`, opts)),
-
+ 
   getAnimal: async (id, opts) => {
     const data = await request(`/animals/${encodeURIComponent(id)}`, opts);
     const animal = normalizeAnimal(unwrapOne(data, 'animal'));
     if (!animal?.id) throw new ApiError(404, 'Animal not found.');
     return animal;
   },
-
+ 
   login: async (email, password) => {
     const data = await request('/auth/login', {
       method: 'POST',
@@ -220,7 +221,7 @@ export const api = {
     if (!token || !user) throw new ApiError(500, 'Unexpected login response from the server.');
     return { token, user };
   },
-
+ 
   // Staff only (proposal R-01 / US-01). Returns the new animal.
   createAnimal: async (animal, opts) => {
     const data = await request('/animals', { ...opts, method: 'POST', body: animal });
@@ -228,11 +229,11 @@ export const api = {
     if (!created?.id) throw new ApiError(500, 'Unexpected response from the server.');
     return created;
   },
-
+ 
   // Staff only (proposal R-09). Oldest first.
   getAnimalHistory: async (id, opts) =>
     normalizeHistory(await request(`/animals/${encodeURIComponent(id)}/history`, opts)),
-
+ 
   // Staff only (proposal R-09 / R-12). Returns the updated animal.
   changeAnimalStatus: async (id, status, note, opts) => {
     const data = await request(`/animals/${encodeURIComponent(id)}/status`, {
@@ -244,7 +245,16 @@ export const api = {
     if (!animal?.id) throw new ApiError(500, 'Unexpected response from the server.');
     return animal;
   },
-
+ 
   myApplications: async (opts) =>
     normalizeApplications(await request('/applications/mine', opts)),
+ 
+  // Adopter only (proposal R-05 / US-05). 201 with the new application;
+  // 400 field errors, 404 unknown animal, 409 animal not Available.
+  submitApplication: (animalId, householdDetails, opts) =>
+    request('/applications', {
+      ...opts,
+      method: 'POST',
+      body: { animalId, householdDetails },
+    }),
 };
