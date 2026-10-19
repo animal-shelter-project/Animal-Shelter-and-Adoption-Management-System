@@ -6,6 +6,9 @@ const router = express.Router();
 
 router.get("/mine", requireAuth, requireRole("Adopter"), ApplicationController.mine);
 router.post("/", requireAuth, requireRole("Adopter"), ApplicationController.submitApplication);
-// Step 3 adds: GET /?status=Pending (Staff), PUT /:id/approve and /:id/reject (Staff)
+
+router.get("/", requireAuth, requireRole("Staff"), ApplicationController.listPending);
+router.put("/:id/approve", requireAuth, requireRole("Staff"), ApplicationController.approve);
+router.put("/:id/reject", requireAuth, requireRole("Staff"), ApplicationController.reject);
 
 module.exports = router;
