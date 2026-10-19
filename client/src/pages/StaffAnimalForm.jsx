@@ -7,6 +7,7 @@ import StatusBadge from '../components/StatusBadge.jsx';
 import { SPECIES, STATUSES } from '../constants.js';
 import { formatAge } from '../format.js';
 import { useDocumentTitle } from '../hooks.js';
+import EditAnimalForm from './EditAnimalForm.jsx';
 
 // Proposal R-01 / US-01: staff add a new animal (Staff only; see App.jsx).
 //
@@ -22,14 +23,14 @@ import { useDocumentTitle } from '../hooks.js';
 //  - A live preview shows the card adopters will see.
 //  - Can't double-submit. On success: the new animal's profile, with a
 //    confirmation and a link to add another.
-//  - /staff/animals/:id/edit is still to come (M3); it shows a clear note.
+//  - /staff/animals/:id/edit is in EditAnimalForm.jsx.); it shows a clear note.
 const EMPTY = { name: '', species: 'Dog', otherSpecies: '', breed: '', age: '', status: 'Available' };
 const FIELD_ORDER = ['name', 'species', 'breed', 'age', 'status'];
 
 export default function StaffAnimalForm() {
   const { id } = useParams();
   useDocumentTitle(id ? 'Edit animal' : 'Add an animal');
-  if (id) return <EditComingSoon id={id} />;
+  if (id) return <EditAnimalForm id={id} />;
   return <AddAnimalForm />;
 }
 
@@ -248,19 +249,5 @@ function FieldError({ name, errors }) {
     <span className="field-error" id={`animal-${name}-error`}>
       {errors[name]}
     </span>
-  );
-}
-
-function EditComingSoon({ id }) {
-  return (
-    <div className="page narrow">
-      <div className="placeholder">
-        <h1>Edit animal #{id}</h1>
-        <p className="muted">Editing animals is coming in a later sprint.</p>
-        <Link to={`/animals/${encodeURIComponent(id)}`} className="btn">
-          Back to the profile
-        </Link>
-      </div>
-    </div>
   );
 }

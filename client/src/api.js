@@ -229,6 +229,19 @@ export const api = {
     return created;
   },
 
+  // Staff only (proposal R-01 / US-06). Saves the animal's details; omitted
+  // fields keep their values. Status changes go through changeAnimalStatus.
+  updateAnimal: async (id, details, opts) => {
+    const data = await request(`/animals/${encodeURIComponent(id)}`, {
+      ...opts,
+      method: 'PUT',
+      body: details,
+    });
+    const animal = normalizeAnimal(unwrapOne(data, 'animal'));
+    if (!animal?.id) throw new ApiError(500, 'Unexpected response from the server.');
+    return animal;
+  },
+
   // Staff only (proposal R-09). Oldest first.
   getAnimalHistory: async (id, opts) =>
     normalizeHistory(await request(`/animals/${encodeURIComponent(id)}/history`, opts)),
