@@ -43,6 +43,7 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     animal_id INTEGER NOT NULL,
     applicant_id INTEGER NOT NULL,
+    household_details TEXT NOT NULL DEFAULT '',
     status TEXT NOT NULL DEFAULT 'Pending'
       CHECK (status IN ('Pending', 'Approved', 'Rejected')),
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -68,5 +69,12 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_status_history_animal ON status_history(animal_id, id);
   CREATE INDEX IF NOT EXISTS idx_animals_status ON animals(status);
 `);
+
+// Databases created before household_details existed don't get it from
+// CREATE TABLE IF NOT EXISTS, so add the column if it is missing.
+const applicationColumns = db.pragma("table_info(applications)").map((c) => c.name);
+if (!applicationColumns.includes("household_details")) {
+  db.exec("ALTER TABLE applications ADD COLUMN household_details TEXT NOT NULL DEFAULT ''");
+}
 
 module.exports = db;
