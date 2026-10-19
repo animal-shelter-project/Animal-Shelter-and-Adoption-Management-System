@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { api } from '../api.js';
 import StatusBadge from '../components/StatusBadge.jsx';
 import { formatDate, parseDate } from '../format.js';
@@ -11,6 +11,7 @@ const newestFirst = (list) =>
 // Uses GET /api/applications/mine (Adopter only). If the server in use
 // doesn't have that route yet (404/501), the page says so instead of failing.
 export default function MyApplications() {
+  const applied = useLocation().state?.applied;
   useDocumentTitle('My applications');
   const { data: apps, error, loading, reload } = useResource(
     'applications:mine',
@@ -24,6 +25,12 @@ export default function MyApplications() {
         <h1>My applications</h1>
         <p className="muted">Every animal you’ve applied for, newest first.</p>
       </div>
+
+      {applied && (
+        <div className="notice success" role="status">
+          Your application for {applied.animalName} was submitted. Staff will review it soon.
+        </div>
+      )}
 
       {loading && (
         <p className="muted" role="status">
