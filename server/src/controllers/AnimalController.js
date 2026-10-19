@@ -2,6 +2,7 @@ const Animal = require("../models/Animal");
 const HttpError = require("../utils/HttpError");
 const StatusHistory = require("../models/StatusHistory");
 const { changeStatus, updateDetails } = require("../services/AnimalStatusService");
+const MAX_AGE = 40;
 const {
   parseId,
   optionalText,
@@ -58,8 +59,10 @@ function readBreed(value, fallback) {
 function readAge(value, fallback) {
   if (value === undefined) return fallback;
 
-  if (typeof value !== "number" || !Number.isInteger(value) || value < 0) {
-    throw new HttpError(400, "Age must be a non-negative integer.");
+    if (typeof value !== "number" || !Number.isInteger(value) || value < 0 || value > MAX_AGE) {
+    throw new HttpError(400, `Age must be a whole number from 0 to ${MAX_AGE}.`, {
+      fields: { age: `Age must be a whole number from 0 to ${MAX_AGE}.` },
+    });
   }
 
   return value;
