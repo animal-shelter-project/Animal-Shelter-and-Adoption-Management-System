@@ -27,7 +27,7 @@ export default function MyApplications() {
       </div>
 
       {applied && (
-        <div className="notice success" role="status">
+        <div className="notice notice-success" role="status">
           Your application for {applied.animalName} was submitted. Staff will review it soon.
         </div>
       )}
