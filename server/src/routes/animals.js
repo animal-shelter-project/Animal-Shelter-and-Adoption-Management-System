@@ -1,6 +1,7 @@
 const express = require("express");
 const AnimalController = require("../controllers/AnimalController");
 const { requireAuth, requireRole } = require("../middleware/auth");
+const MedicalRecordController = require('../controllers/MedicalRecordController');
 
 const router = express.Router();
 
@@ -36,6 +37,22 @@ router.patch(
   requireAuth,
   requireRole("Staff"),
   AnimalController.changeStatus,
+);
+
+// Staff can view an animal's medical records.
+router.get(
+  '/:id/medical-records',
+  requireAuth,
+  requireRole('Staff'),
+  MedicalRecordController.listForAnimal
+);
+
+// Staff can add a medical record for an animal.
+router.post(
+  '/:id/medical-records',
+  requireAuth,
+  requireRole('Staff'),
+  MedicalRecordController.createForAnimal
 );
 
 module.exports = router;
