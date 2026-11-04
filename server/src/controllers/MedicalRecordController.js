@@ -29,6 +29,11 @@ function listForAnimal(req, res) {
 
 function createForAnimal(req, res) {
   const animalId = Number(req.params.id);
+
+  if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
+    return res.status(400).json({ error: 'Request body must be a JSON object.' });
+  }
+
   const { recordDate, recordType, notes = '' } = req.body;
 
   if (!Number.isInteger(animalId) || animalId < 1) {
