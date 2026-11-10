@@ -28,3 +28,6 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 *:Zone.Identifier
+
+# Uploaded animal photos
+server/uploads/

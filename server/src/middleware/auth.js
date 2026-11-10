@@ -45,4 +45,21 @@ function requireRole(...roles) {
   };
 }
 
-module.exports = { requireAuth, requireRole };
+// For public routes that show more to staff (e.g. archived animals): sets
+// req.user when a valid token is sent, and otherwise carries on as a visitor.
+function optionalAuth(req, res, next) {
+  const header = req.get("Authorization") || "";
+  const [scheme, token] = header.split(" ");
+  if (scheme === "Bearer" && token) {
+    try {
+      const payload = AuthService.verifyToken(token);
+      const user = User.findById(payload.id);
+      if (user) req.user = user;
+    } catch {
+      // expired or invalid: treat as a visitor
+    }
+  }
+  return next();
+}
+
+module.exports = { requireAuth, requireRole, optionalAuth };

@@ -198,16 +198,58 @@ export function buildQuery(params = {}) {
   return s ? `?${s}` : '';
 }
 
+// Photos are served by the API server (/uploads/...), which is a different
+// origin from this app in development, so make their URLs absolute.
+const API_ORIGIN = BASE.replace(/\/api$/, '');
+export function withPhotoOrigin(animal) {
+  if (animal?.photoUrl && animal.photoUrl.startsWith('/uploads/')) {
+    return { ...animal, photoUrl: `${API_ORIGIN}${animal.photoUrl}` };
+  }
+  return animal;
+}
+
+// One animal from a response, or a 500 if the server sent something else.
+function oneAnimal(data, missingStatus = 500) {
+  const animal = normalizeAnimal(unwrapOne(data, 'animal'));
+  if (!animal?.id) {
+    throw new ApiError(missingStatus, missingStatus === 404 ? 'Animal not found.' : 'Unexpected response from the server.');
+  }
+  return withPhotoOrigin(animal);
+}
+
 export const api = {
   listAnimals: async (filters, opts) =>
-    normalizeAnimals(await request(`/animals${buildQuery(filters)}`, opts)),
+    normalizeAnimals(await request(`/animals${buildQuery(filters)}`, opts)).map(withPhotoOrigin),
 
-  getAnimal: async (id, opts) => {
-    const data = await request(`/animals/${encodeURIComponent(id)}`, opts);
-    const animal = normalizeAnimal(unwrapOne(data, 'animal'));
-    if (!animal?.id) throw new ApiError(404, 'Animal not found.');
-    return animal;
+  getAnimal: async (id, opts) =>
+    oneAnimal(await request(`/animals/${encodeURIComponent(id)}`, opts), 404),
+
+  // Breeds already used, for the form's suggestions.
+  breeds: async (species, opts) => {
+    const data = await request(`/animals/breeds${buildQuery({ species })}`, opts);
+    return Array.isArray(data) ? data.filter((b) => typeof b === 'string') : [];
   },
+
+  // Staff only. image is a data: URL (JPEG, PNG or WebP, 2 MB max).
+  uploadAnimalPhoto: async (id, image, opts) =>
+    oneAnimal(
+      await request(`/animals/${encodeURIComponent(id)}/photo`, {
+        timeout: 30000,
+        ...opts,
+        method: 'PUT',
+        body: { image },
+      }),
+    ),
+
+  removeAnimalPhoto: async (id, opts) =>
+    oneAnimal(await request(`/animals/${encodeURIComponent(id)}/photo`, { ...opts, method: 'DELETE' })),
+
+  // Staff only: hide from the catalog / bring back.
+  archiveAnimal: async (id, opts) =>
+    oneAnimal(await request(`/animals/${encodeURIComponent(id)}`, { ...opts, method: 'DELETE' })),
+
+  restoreAnimal: async (id, opts) =>
+    oneAnimal(await request(`/animals/${encodeURIComponent(id)}/restore`, { ...opts, method: 'POST' })),
 
   login: async (email, password) => {
     const data = await request('/auth/login', {
@@ -222,41 +264,31 @@ export const api = {
   },
 
   // Staff only (proposal R-01 / US-01). Returns the new animal.
-  createAnimal: async (animal, opts) => {
-    const data = await request('/animals', { ...opts, method: 'POST', body: animal });
-    const created = normalizeAnimal(unwrapOne(data, 'animal'));
-    if (!created?.id) throw new ApiError(500, 'Unexpected response from the server.');
-    return created;
-  },
+  // A 409 with err.body.duplicate means a same-named animal of that species
+  // exists; send allowDuplicate: true to add it anyway.
+  createAnimal: async (animal, opts) =>
+    oneAnimal(await request('/animals', { ...opts, method: 'POST', body: animal })),
 
   // Staff only (proposal R-01 / US-06). Saves the animal's details; omitted
   // fields keep their values. Status changes go through changeAnimalStatus.
-  updateAnimal: async (id, details, opts) => {
-    const data = await request(`/animals/${encodeURIComponent(id)}`, {
-      ...opts,
-      method: 'PUT',
-      body: details,
-    });
-    const animal = normalizeAnimal(unwrapOne(data, 'animal'));
-    if (!animal?.id) throw new ApiError(500, 'Unexpected response from the server.');
-    return animal;
-  },
+  updateAnimal: async (id, details, opts) =>
+    oneAnimal(
+      await request(`/animals/${encodeURIComponent(id)}`, { ...opts, method: 'PUT', body: details }),
+    ),
 
   // Staff only (proposal R-09). Oldest first.
   getAnimalHistory: async (id, opts) =>
     normalizeHistory(await request(`/animals/${encodeURIComponent(id)}/history`, opts)),
 
   // Staff only (proposal R-09 / R-12). Returns the updated animal.
-  changeAnimalStatus: async (id, status, note, opts) => {
-    const data = await request(`/animals/${encodeURIComponent(id)}/status`, {
-      ...opts,
-      method: 'PATCH',
-      body: note ? { status, note } : { status },
-    });
-    const animal = normalizeAnimal(unwrapOne(data, 'animal'));
-    if (!animal?.id) throw new ApiError(500, 'Unexpected response from the server.');
-    return animal;
-  },
+  changeAnimalStatus: async (id, status, note, opts) =>
+    oneAnimal(
+      await request(`/animals/${encodeURIComponent(id)}/status`, {
+        ...opts,
+        method: 'PATCH',
+        body: note ? { status, note } : { status },
+      }),
+    ),
 
   myApplications: async (opts) =>
     normalizeApplications(await request('/applications/mine', opts)),

@@ -368,3 +368,27 @@ a:focus-visible, .btn:focus-visible, .chip:focus-visible, .card:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
+
+/* ---------- v2 additions ---------- */
+textarea {
+  font: inherit; font-weight: 500; color: var(--ink); padding: 0.65rem 0.8rem; width: 100%;
+  border: 2px solid var(--ink); border-radius: 12px; background: var(--paper); resize: vertical;
+}
+textarea:focus { outline: 3px solid var(--violet); outline-offset: 2px; }
+.field textarea[aria-invalid='true'] { border-color: var(--danger-text); background: #fff6f8; }
+fieldset.good-with { border: 2px dashed #d9d4e6; border-radius: 14px; padding: 0.6rem 0.9rem 0.9rem; margin: 0; }
+fieldset.good-with legend { font-size: 0.9rem; font-weight: 700; padding: 0 0.35rem; }
+.notice-warning { background: var(--sun-soft); color: #6b4a00; }
+.notice-warning p { margin: 0; }
+.notice-warning .actions { margin-top: 0.75rem; }
+.filters label.check {
+  flex-direction: row; align-items: center; gap: 0.5rem; height: 2.75rem; cursor: pointer;
+}
+.filters label.check input { min-width: 0; width: 1.2rem; height: 1.2rem; padding: 0; accent-color: var(--violet); }
+.filters input[type='search'] { min-width: 150px; }
+.pager { display: flex; align-items: center; justify-content: center; gap: 1rem; margin: 2rem 0 0.5rem; flex-wrap: wrap; }
+.pager .btn[disabled] { opacity: 0.45; cursor: not-allowed; }
+.staff-tools { margin-top: 2.25rem; }
+.staff-tools .actions { margin-top: 0.5rem; }
+.staff-tools .notice { margin-bottom: 0.75rem; }
+.good-with .field-row .field { flex: 1 1 120px; }

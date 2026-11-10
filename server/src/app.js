@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const HttpError = require("./utils/HttpError");
-const { CLIENT_ORIGIN } = require("./config");
+const { CLIENT_ORIGIN, UPLOAD_DIR } = require("./config");
 
 require("./db");
 
@@ -10,7 +10,18 @@ const app = express();
 
 app.disable("x-powered-by");
 app.use(cors(CLIENT_ORIGIN ? { origin: CLIENT_ORIGIN } : undefined));
+// Photos are sent as base64 JSON, so that one route takes a bigger body.
+app.use("/api/animals/:id/photo", express.json({ limit: "3mb" }));
 app.use(express.json({ limit: "100kb" }));
+
+// Uploaded animal photos. Only image files are ever written here.
+app.use(
+  "/uploads",
+  express.static(UPLOAD_DIR, {
+    fallthrough: true,
+    setHeaders: (res) => res.set("X-Content-Type-Options", "nosniff"),
+  }),
+);
 
 app.get("/api/health", (req, res) => {
   res.json({

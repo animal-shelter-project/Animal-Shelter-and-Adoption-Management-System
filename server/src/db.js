@@ -70,11 +70,39 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_animals_status ON animals(status);
 `);
 
-// Databases created before household_details existed don't get it from
-// CREATE TABLE IF NOT EXISTS, so add the column if it is missing.
-const applicationColumns = db.pragma("table_info(applications)").map((c) => c.name);
-if (!applicationColumns.includes("household_details")) {
-  db.exec("ALTER TABLE applications ADD COLUMN household_details TEXT NOT NULL DEFAULT ''");
+// Columns added after the first release. CREATE TABLE IF NOT EXISTS doesn't
+// change an existing table, so each missing column is added here. This keeps
+// everyone's existing shelter.db working without deleting data.
+const MIGRATIONS = {
+  applications: [
+    ["household_details", "TEXT NOT NULL DEFAULT ''"],
+  ],
+  animals: [
+    // Item: age under a year (0-11 extra months on top of age in years).
+    ["age_months", "INTEGER NOT NULL DEFAULT 0 CHECK (age_months BETWEEN 0 AND 11)"],
+    ["sex", "TEXT NOT NULL DEFAULT 'Unknown' CHECK (sex IN ('Male', 'Female', 'Unknown'))"],
+    ["size", "TEXT NOT NULL DEFAULT '' CHECK (size IN ('', 'Small', 'Medium', 'Large'))"],
+    ["description", "TEXT NOT NULL DEFAULT ''"],
+    // 1 = yes, 0 = no, NULL = not known yet.
+    ["good_with_kids", "INTEGER CHECK (good_with_kids IN (0, 1))"],
+    ["good_with_dogs", "INTEGER CHECK (good_with_dogs IN (0, 1))"],
+    ["good_with_cats", "INTEGER CHECK (good_with_cats IN (0, 1))"],
+    ["adoption_fee", "INTEGER NOT NULL DEFAULT 0 CHECK (adoption_fee >= 0)"],
+    // File name in the uploads folder, or NULL for the illustrated portrait.
+    ["photo", "TEXT"],
+    // Archived animals are hidden from the catalog but keep their history.
+    ["archived_at", "TEXT"],
+    ["archived_by", "INTEGER REFERENCES users(id) ON DELETE SET NULL"],
+  ],
+};
+
+for (const [table, columns] of Object.entries(MIGRATIONS)) {
+  const existing = db.pragma(`table_info(${table})`).map((c) => c.name);
+  for (const [name, definition] of columns) {
+    if (!existing.includes(name)) {
+      db.exec(`ALTER TABLE ${table} ADD COLUMN ${name} ${definition}`);
+    }
+  }
 }
 
 module.exports = db;

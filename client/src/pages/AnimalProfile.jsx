@@ -2,10 +2,11 @@ import { Link, useLocation, useParams } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAuth } from '../auth/useAuth.js';
 import AnimalPhoto from '../components/AnimalPhoto.jsx';
+import StaffAnimalTools from '../components/StaffAnimalTools.jsx';
 import StaffStatusPanel from '../components/StaffStatusPanel.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import { canApply } from '../constants.js';
-import { formatAge, formatDate } from '../format.js';
+import { formatAge, formatDate, formatFee } from '../format.js';
 import { useDocumentTitle, useResource } from '../hooks.js';
 import { ANIMAL_STATUS } from '../normalize.js';
 
@@ -26,6 +27,22 @@ const STATUS_NOTE = {
   [ANIMAL_STATUS.ADOPTED]: '{name} has found a home. Happy tails!',
   [ANIMAL_STATUS.FOSTERED]: '{name} is currently in foster care.',
 };
+
+// "Children, dogs" / "Not with cats": only what staff have recorded.
+function goodWithText(animal) {
+  const pairs = [
+    ['children', animal.goodWithKids],
+    ['dogs', animal.goodWithDogs],
+    ['cats', animal.goodWithCats],
+  ];
+  const yes = pairs.filter(([, v]) => v === true).map(([k]) => k);
+  const no = pairs.filter(([, v]) => v === false).map(([k]) => k);
+  const parts = [];
+  if (yes.length) parts.push(yes.join(', '));
+  if (no.length) parts.push(`not ${no.join(' or ')}`);
+  const text = parts.join('; ');
+  return text ? text[0].toUpperCase() + text.slice(1) : null;
+}
 
 export default function AnimalProfile() {
   const { id } = useParams();
@@ -83,8 +100,10 @@ export default function AnimalProfile() {
     ['Species', animal.species],
     ['Breed', animal.breed],
     ['Age', formatAge(animal.age, animal.ageMonths)],
-    ['Sex', animal.sex],
+    ['Sex', animal.sex && animal.sex !== 'Unknown' ? animal.sex : null],
     ['Size', animal.size],
+    ['Good with', goodWithText(animal)],
+    ['Adoption fee', animal.adoptionFee != null ? formatFee(animal.adoptionFee) : null],
     ['Intake date', animal.intakeDate ? formatDate(animal.intakeDate) : null],
   ].filter(([, v]) => v);
 
@@ -107,6 +126,12 @@ export default function AnimalProfile() {
               Add another animal
             </Link>
           )}
+        </div>
+      )}
+      {animal.archived && (
+        <div className="notice notice-warning" role="status" data-testid="archived-notice">
+          {animal.name} is archived: hidden from the public catalog. Use “Restore to catalog” below to list
+          them again.
         </div>
       )}
       <article className="profile">
@@ -162,7 +187,8 @@ export default function AnimalProfile() {
           </div>
         </div>
       </article>
-      {isStaff && <StaffStatusPanel animal={animal} onChanged={refresh} />}
+      {isStaff && <StaffAnimalTools animal={animal} onChanged={refresh} />}
+      {isStaff && !animal.archived && <StaffStatusPanel animal={animal} onChanged={refresh} />}
     </div>
   );
 }
