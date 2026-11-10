@@ -1,6 +1,7 @@
 const express = require("express");
 const AnimalController = require("../controllers/AnimalController");
 const { requireAuth, requireRole, optionalAuth } = require("../middleware/auth");
+const MedicalRecordController = require('../controllers/MedicalRecordController');
 
 const router = express.Router();
 const staff = [requireAuth, requireRole("Staff")];
@@ -23,5 +24,21 @@ router.delete("/:id/photo", ...staff, AnimalController.deletePhoto);
 // Proposal R-09 / R-12: status history and staff status changes.
 router.get("/:id/history", ...staff, AnimalController.history);
 router.patch("/:id/status", ...staff, AnimalController.changeStatus);
+
+// Staff can view an animal's medical records.
+router.get(
+  '/:id/medical-records',
+  requireAuth,
+  requireRole('Staff'),
+  MedicalRecordController.listForAnimal
+);
+
+// Staff can add a medical record for an animal.
+router.post(
+  '/:id/medical-records',
+  requireAuth,
+  requireRole('Staff'),
+  MedicalRecordController.createForAnimal
+);
 
 module.exports = router;

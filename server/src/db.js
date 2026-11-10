@@ -75,10 +75,36 @@ db.exec(`
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
 
+  -- Proposal R-10 (PR #18): basic medical records.
+  CREATE TABLE IF NOT EXISTS medical_records (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    animal_id INTEGER NOT NULL REFERENCES animals(id) ON DELETE CASCADE,
+    record_date TEXT NOT NULL,
+    record_type TEXT NOT NULL,
+    notes TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+
+  -- Proposal R-11: appointments (vet visits, meet-and-greets, grooming...).
+  CREATE TABLE IF NOT EXISTS appointments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    animal_id INTEGER NOT NULL REFERENCES animals(id) ON DELETE CASCADE,
+    starts_at TEXT NOT NULL,
+    duration_minutes INTEGER NOT NULL CHECK (duration_minutes BETWEEN 5 AND 480),
+    purpose TEXT NOT NULL,
+    notes TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'Scheduled' CHECK (status IN ('Scheduled', 'Done', 'Cancelled')),
+    created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+
   CREATE INDEX IF NOT EXISTS idx_applications_applicant ON applications(applicant_id);
   CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, id);
   CREATE INDEX IF NOT EXISTS idx_status_history_animal ON status_history(animal_id, id);
   CREATE INDEX IF NOT EXISTS idx_animals_status ON animals(status);
+  CREATE INDEX IF NOT EXISTS idx_medical_records_animal_date ON medical_records(animal_id, record_date DESC);
+  CREATE INDEX IF NOT EXISTS idx_appointments_animal ON appointments(animal_id, starts_at);
+  CREATE INDEX IF NOT EXISTS idx_appointments_time ON appointments(starts_at);
 `);
 
 // Columns added after the first release. CREATE TABLE IF NOT EXISTS doesn't
