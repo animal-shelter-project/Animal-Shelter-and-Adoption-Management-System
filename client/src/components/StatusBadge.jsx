@@ -5,6 +5,8 @@ const CLASS_BY_STATUS = {
   Adopted: 'badge-adopted',
   Fostered: 'badge-fostered',
   Rejected: 'badge-rejected',
+  Withdrawn: 'badge-neutral',
+  Returned: 'badge-returned',
 };
 
 // Color is never the only signal: the status text is always shown.

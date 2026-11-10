@@ -1,5 +1,6 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth.js';
+import NotificationsLink from './NotificationsLink.jsx';
 
 export default function Navbar() {
   const { user, isLoggedIn, isStaff, isAdopter, logout } = useAuth();
@@ -30,6 +31,7 @@ export default function Navbar() {
             Animals
           </NavLink>
           {isAdopter && <NavLink to="/my-applications">My applications</NavLink>}
+          {isAdopter && <NotificationsLink userId={user?.id} />}
           {isStaff && <NavLink to="/staff/applications">Review applications</NavLink>}
           {isStaff && <NavLink to="/staff/animals/new">Add animal</NavLink>}
           {isStaff && <NavLink to="/staff/accounts">Accounts</NavLink>}

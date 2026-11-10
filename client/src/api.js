@@ -343,26 +343,57 @@ export const api = {
     normalizeHistory(await request(`/animals/${encodeURIComponent(id)}/history`, opts)),
 
   // Staff only (proposal R-09 / R-12). Returns the updated animal.
-  changeAnimalStatus: async (id, status, note, opts) =>
-    oneAnimal(
-      await request(`/animals/${encodeURIComponent(id)}/status`, {
-        ...opts,
-        method: 'PATCH',
-        body: note ? { status, note } : { status },
-      }),
-    ),
+  // v2: changing to Adopted by hand needs adopterId (the adopter's account).
+  changeAnimalStatus: async (id, status, note, opts = {}) => {
+    const { adopterId, ...rest } = opts;
+    const body = { status };
+    if (note) body.note = note;
+    if (adopterId) body.adopterId = Number(adopterId);
+    return oneAnimal(
+      await request(`/animals/${encodeURIComponent(id)}/status`, { ...rest, method: 'PATCH', body }),
+    );
+  },
 
   myApplications: async (opts) =>
     normalizeApplications(await request('/applications/mine', opts)),
 
   // Adopter only (proposal R-05 / US-05). 201 with the new application;
   // 400 field errors, 404 unknown animal, 409 animal not Available.
-  submitApplication: (animalId, householdDetails, opts) =>
+  // v2: answers = { homeType, ownOrRent, landlordOk, hasYard, adults,
+  // children, otherPets, hoursAlone }.
+  submitApplication: (animalId, householdDetails, answers = {}, opts) =>
     request('/applications', {
       ...opts,
       method: 'POST',
-      body: { animalId, householdDetails },
+      body: { animalId, householdDetails, ...answers },
     }),
+
+  // Adopter: withdraw your own Pending application.
+  withdrawApplication: async (id, opts) =>
+    normalizeApplications([
+      await request(`/applications/${encodeURIComponent(id)}/withdraw`, { ...opts, method: 'PUT' }),
+    ])[0],
+
+  // Staff: status = pending | decided | all | Approved | Rejected | Withdrawn | Returned.
+  staffApplications: async (status = 'pending', opts) =>
+    normalizeApplications(await request(`/applications${buildQuery({ status })}`, opts)),
+
+  // Staff: private notes on an application.
+  saveApplicationNotes: async (id, notes, opts) =>
+    normalizeApplications([
+      await request(`/applications/${encodeURIComponent(id)}/notes`, { ...opts, method: 'PUT', body: { notes } }),
+    ])[0],
+
+  // Any logged-in user: { unread, items: [{ id, message, link, createdAt, read }] }.
+  notifications: async (opts) => {
+    const data = await request('/notifications', opts);
+    return { unread: Number(data?.unread) || 0, items: Array.isArray(data?.items) ? data.items : [] };
+  },
+
+  readNotifications: async (opts) => {
+    const data = await request('/notifications/read', { ...opts, method: 'POST' });
+    return { unread: Number(data?.unread) || 0, items: Array.isArray(data?.items) ? data.items : [] };
+  },
 
   // Staff only (proposal R-06). Pending applications, oldest first, each with
   // the animal's name and the applicant's email.

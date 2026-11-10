@@ -4,7 +4,7 @@ const crypto = require("crypto");
 const Animal = require("../models/Animal");
 const HttpError = require("../utils/HttpError");
 const StatusHistory = require("../models/StatusHistory");
-const { changeStatus, updateDetails } = require("../services/AnimalStatusService");
+const { manualChange, updateDetails } = require("../services/AnimalStatusService");
 const { UPLOAD_DIR } = require("../config");
 const {
   parseId,
@@ -323,12 +323,17 @@ class AnimalController {
   }
 
   // PATCH /api/animals/:id/status   (proposal R-09, R-12; Staff only)
-  // Body { status, note? }. 200 with the updated animal; 409 if the change
-  // isn't allowed (e.g. the animal has an application under review).
+  // Body { status, note?, adopterId? }. 200 with the updated animal; 409 if
+  // the change isn't allowed (e.g. the animal has an application under
+  // review). Adopted needs adopterId (v2: every adoption has a record).
   static changeStatus(req, res) {
     const id = parseId(req.params.id, "animal id");
     const { status, note } = validateStatusChange(req.body);
-    const animal = changeStatus(id, status, { changedBy: req.user.id, note, manual: true });
+    const adopterId =
+      req.body.adopterId === undefined || req.body.adopterId === null || req.body.adopterId === ""
+        ? null
+        : parseId(String(req.body.adopterId), "adopter id");
+    const animal = manualChange(id, status, { changedBy: req.user.id, note, adopterId });
     res.json(animal);
   }
 }

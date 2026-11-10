@@ -34,6 +34,7 @@ app.use("/api/auth", require("./routes/auth"));
 app.use("/api/animals", require("./routes/animals"));
 app.use("/api/applications", require("./routes/applications"));
 app.use("/api/users", require("./routes/users"));
+app.use("/api/notifications", require("./routes/notifications"));
 
 app.use((req, res) => {
   res.status(404).json({

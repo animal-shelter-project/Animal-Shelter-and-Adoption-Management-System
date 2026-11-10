@@ -6,6 +6,7 @@ import RequireRole from './auth/RequireRole.jsx';
 import AnimalList from './pages/AnimalList.jsx';
 import AnimalProfile from './pages/AnimalProfile.jsx';
 import Account from './pages/Account.jsx';
+import Notifications from './pages/Notifications.jsx';
 import Register from './pages/Register.jsx';
 import StaffAccounts from './pages/StaffAccounts.jsx';
 import Login from './pages/Login.jsx';
@@ -40,6 +41,14 @@ export default function App() {
               element={
                 <RequireRole>
                   <Account />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/notifications"
+              element={
+                <RequireRole>
+                  <Notifications />
                 </RequireRole>
               }
             />

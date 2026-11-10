@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api.js';
+import StatusBadge from '../components/StatusBadge.jsx';
+import { answersSummary } from '../applicationForm.js';
 import { formatDate } from '../format.js';
 import { useDocumentTitle, useResource } from '../hooks.js';
 
@@ -17,15 +19,22 @@ import { useDocumentTitle, useResource } from '../hooks.js';
 //  - After a decision the list reloads. That also happens after a refused
 //    one (e.g. 409, someone else decided first), so the page shows what is
 //    really still pending, along with the server's reason.
+//  - v2: the applicant's name and phone, their answers to the structured
+//    questions, private staff notes, and a "Decided" tab with past decisions
+//    (who decided and when).
+
 export default function StaffApplications() {
   useDocumentTitle('Review applications');
+  const [view, setView] = useState('pending'); // 'pending' | 'decided'
   const { data: apps, error, loading, reload, refresh } = useResource(
-    'applications:pending',
-    (signal) => api.pendingApplications({ signal }),
+    `applications:${view}`,
+    (signal) => (view === 'pending' ? api.pendingApplications({ signal }) : api.staffApplications('decided', { signal })),
   );
   const [busyId, setBusyId] = useState(null);
   const [done, setDone] = useState('');
   const [actionError, setActionError] = useState('');
+  const [notesOpen, setNotesOpen] = useState(null); // application id
+  const [notesDraft, setNotesDraft] = useState('');
 
   const decide = async (app, decision) => {
     if (busyId) return;
@@ -47,11 +56,54 @@ export default function StaffApplications() {
     }
   };
 
+  const openNotes = (app) => {
+    setNotesOpen(notesOpen === app.id ? null : app.id);
+    setNotesDraft(app.staffNotes || '');
+  };
+
+  const saveNotes = async (app) => {
+    if (busyId) return;
+    setBusyId(app.id);
+    setActionError('');
+    try {
+      await api.saveApplicationNotes(app.id, notesDraft);
+      setDone(`Notes saved for ${app.applicantName || app.applicantEmail}'s application.`);
+      setNotesOpen(null);
+    } catch (err) {
+      setActionError(err.message || 'Could not save the notes.');
+    } finally {
+      setBusyId(null);
+      refresh();
+    }
+  };
+
+  const switchView = (next) => {
+    setView(next);
+    setDone('');
+    setActionError('');
+    setNotesOpen(null);
+  };
+
+  const pendingView = view === 'pending';
+
   return (
     <div className="page">
       <div className="page-head">
         <h1>Review applications</h1>
-        <p className="muted">Pending adoption applications, oldest first.</p>
+        <p className="muted">
+          {pendingView
+            ? 'Pending adoption applications, oldest first.'
+            : 'Past decisions, most recent first.'}
+        </p>
+      </div>
+
+      <div className="tabs" role="group" aria-label="Which applications">
+        <button type="button" className={`chip${pendingView ? ' chip-active' : ''}`} aria-pressed={pendingView} onClick={() => switchView('pending')}>
+          Waiting for review
+        </button>
+        <button type="button" className={`chip${!pendingView ? ' chip-active' : ''}`} aria-pressed={!pendingView} onClick={() => switchView('decided')}>
+          Decided
+        </button>
       </div>
 
       {done && (
@@ -80,7 +132,7 @@ export default function StaffApplications() {
       )}
       {apps && apps.length === 0 && (
         <div className="empty">
-          <p>No applications are waiting for review.</p>
+          <p>{pendingView ? 'No applications are waiting for review.' : 'No decisions yet.'}</p>
           <Link to="/animals" className="btn">
             Back to the animals
           </Link>
@@ -88,51 +140,112 @@ export default function StaffApplications() {
       )}
       {apps && apps.length > 0 && (
         <div className="table-wrap">
-          <table className="table">
-            <caption className="visually-hidden">Pending adoption applications</caption>
+          <table className="table review-table">
+            <caption className="visually-hidden">
+              {pendingView ? 'Pending adoption applications' : 'Decided adoption applications'}
+            </caption>
             <thead>
               <tr>
                 <th scope="col">Animal</th>
                 <th scope="col">Applicant</th>
                 <th scope="col">Submitted</th>
                 <th scope="col">Household details</th>
-                <th scope="col">Decision</th>
+                <th scope="col">{pendingView ? 'Decision' : 'Outcome'}</th>
               </tr>
             </thead>
             <tbody>
               {apps.map((app) => (
-                <tr key={app.id}>
-                  <td>
-                    <Link to={`/animals/${encodeURIComponent(app.animalId)}`}>
-                      {app.animalName || `Animal #${app.animalId}`}
-                    </Link>
-                  </td>
-                  <td>{app.applicantEmail || '—'}</td>
-                  <td>{formatDate(app.submittedAt)}</td>
-                  <td>{app.householdDetails || '—'}</td>
-                  <td>
-                    <div className="actions">
+                <Fragment key={app.id}>
+                  <tr>
+                    <td>
+                      <Link to={`/animals/${encodeURIComponent(app.animalId)}`}>
+                        {app.animalName || `Animal #${app.animalId}`}
+                      </Link>
+                    </td>
+                    <td>
+                      {app.applicantName && <b className="applicant-name">{app.applicantName}</b>}
+                      <span className="applicant-line">{app.applicantEmail || '—'}</span>
+                      {app.applicantPhone && (
+                        <a className="applicant-line" href={`tel:${app.applicantPhone.replace(/[^\d+]/g, '')}`}>
+                          {app.applicantPhone}
+                        </a>
+                      )}
+                    </td>
+                    <td>{formatDate(app.submittedAt)}</td>
+                    <td>
+                      {answersSummary(app.answers) && <span className="answers">{answersSummary(app.answers)}</span>}
+                      <span>{app.householdDetails || '—'}</span>
+                      {app.staffNotes && notesOpen !== app.id && (
+                        <span className="staff-note">
+                          <b>Staff notes:</b> {app.staffNotes}
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      {pendingView ? (
+                        <div className="actions">
+                          <button
+                            type="button"
+                            className="btn btn-primary"
+                            disabled={busyId !== null}
+                            aria-label={`Approve application for ${app.animalName}`}
+                            onClick={() => decide(app, 'approve')}
+                          >
+                            {busyId === app.id ? 'Saving…' : 'Approve'}
+                          </button>
+                          <button
+                            type="button"
+                            className="btn"
+                            disabled={busyId !== null}
+                            aria-label={`Reject application for ${app.animalName}`}
+                            onClick={() => decide(app, 'reject')}
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="outcome">
+                          <StatusBadge status={app.status} />
+                          <span className="muted small">
+                            {formatDate(app.decidedAt)}
+                            {app.decidedBy ? ` · ${app.decidedBy}` : ''}
+                          </span>
+                        </div>
+                      )}
                       <button
                         type="button"
-                        className="btn btn-primary"
-                        disabled={busyId !== null}
-                        aria-label={`Approve application for ${app.animalName}`}
-                        onClick={() => decide(app, 'approve')}
+                        className="link-button small"
+                        aria-expanded={notesOpen === app.id}
+                        onClick={() => openNotes(app)}
                       >
-                        {busyId === app.id ? 'Saving…' : 'Approve'}
+                        {app.staffNotes ? 'Edit notes' : 'Add notes'}
                       </button>
-                      <button
-                        type="button"
-                        className="btn"
-                        disabled={busyId !== null}
-                        aria-label={`Reject application for ${app.animalName}`}
-                        onClick={() => decide(app, 'reject')}
-                      >
-                        Reject
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+                    </td>
+                  </tr>
+                  {notesOpen === app.id && (
+                    <tr className="notes-row">
+                      <td colSpan={5}>
+                        <label htmlFor={`notes-${app.id}`}>Staff notes (only staff see these)</label>
+                        <textarea
+                          id={`notes-${app.id}`}
+                          rows={3}
+                          maxLength={1000}
+                          value={notesDraft}
+                          onChange={(e) => setNotesDraft(e.target.value)}
+                          placeholder="e.g. Called landlord on 11/10: pets allowed."
+                        />
+                        <div className="actions">
+                          <button type="button" className="btn btn-primary" disabled={busyId !== null} onClick={() => saveNotes(app)}>
+                            Save notes
+                          </button>
+                          <button type="button" className="btn btn-ghost" onClick={() => setNotesOpen(null)}>
+                            Cancel
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
               ))}
             </tbody>
           </table>

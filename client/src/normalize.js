@@ -42,6 +42,7 @@ const APP_STATUS_ALIASES = {
   approved: 'Approved',
   rejected: 'Rejected',
   withdrawn: 'Withdrawn',
+  returned: 'Returned',
 };
 
 export function canonicalApplicationStatus(value) {
@@ -162,6 +163,13 @@ export function normalizeApplication(raw) {
     id: pickId({ id: raw.id ?? raw._id }),
     animalId,
     animalName: cleanText(raw.animalName ?? raw.animal_name ?? animalRef?.name),
+    applicantName: cleanText(raw.applicantName),
+    applicantPhone: cleanText(raw.applicantPhone),
+    applicantEmail: cleanText(raw.applicantEmail),
+    answers: raw.answers && typeof raw.answers === 'object' ? raw.answers : null,
+    staffNotes: cleanText(raw.staffNotes),
+    decidedAt: raw.decidedAt ?? null,
+    decidedBy: cleanText(raw.decidedBy) || null,
     status: canonicalApplicationStatus(raw.status),
     submittedAt: raw.submittedAt ?? raw.submitted_at ?? raw.createdAt ?? raw.created_at ?? null,
   };
