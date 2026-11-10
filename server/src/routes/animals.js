@@ -2,6 +2,7 @@ const express = require("express");
 const AnimalController = require("../controllers/AnimalController");
 const { requireAuth, requireRole, optionalAuth } = require("../middleware/auth");
 const MedicalRecordController = require('../controllers/MedicalRecordController');
+const AppointmentController = require("../controllers/AppointmentController");
 
 const router = express.Router();
 const staff = [requireAuth, requireRole("Staff")];
@@ -40,5 +41,9 @@ router.post(
   requireRole('Staff'),
   MedicalRecordController.createForAnimal
 );
+
+// Proposal R-11: appointments for an animal (Staff only).
+router.get("/:id/appointments", ...staff, AppointmentController.listForAnimal);
+router.post("/:id/appointments", ...staff, AppointmentController.create);
 
 module.exports = router;

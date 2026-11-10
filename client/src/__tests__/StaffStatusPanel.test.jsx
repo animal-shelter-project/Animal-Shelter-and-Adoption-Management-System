@@ -19,6 +19,8 @@ function fakeServer({ status = 'Available', patchReply } = {}) {
     const path = new URL(String(input)).pathname;
     if (path === '/api/animals/1') return jsonResponse(200, state.animal);
     if (path === '/api/animals/1/history') return jsonResponse(200, state.history);
+    // v2: the staff profile also loads medical records and appointments.
+    if (path === '/api/animals/1/medical-records' || path === '/api/animals/1/appointments') return jsonResponse(200, []);
     if (path === '/api/animals/1/status' && init.method === 'PATCH') {
       if (patchReply) return patchReply(init);
       const { status: to, note } = JSON.parse(init.body);

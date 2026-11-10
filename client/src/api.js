@@ -384,6 +384,33 @@ export const api = {
       await request(`/applications/${encodeURIComponent(id)}/notes`, { ...opts, method: 'PUT', body: { notes } }),
     ])[0],
 
+  // Staff: medical records (proposal R-10), newest first.
+  medicalRecords: async (animalId, opts) => {
+    const data = await request(`/animals/${encodeURIComponent(animalId)}/medical-records`, opts);
+    return Array.isArray(data) ? data : [];
+  },
+
+  // record = { recordDate: 'YYYY-MM-DD', recordType, notes }
+  addMedicalRecord: (animalId, record, opts) =>
+    request(`/animals/${encodeURIComponent(animalId)}/medical-records`, { ...opts, method: 'POST', body: record }),
+
+  // Staff: appointments (proposal R-11), soonest first.
+  appointments: async (animalId, opts) => {
+    const data = await request(`/animals/${encodeURIComponent(animalId)}/appointments`, opts);
+    return Array.isArray(data) ? data : [];
+  },
+
+  // appointment = { startsAt: 'YYYY-MM-DDTHH:MM', durationMinutes, purpose, notes }
+  bookAppointment: (animalId, appointment, opts) =>
+    request(`/animals/${encodeURIComponent(animalId)}/appointments`, { ...opts, method: 'POST', body: appointment }),
+
+  // status: 'Done' | 'Cancelled'
+  setAppointmentStatus: (id, status, opts) =>
+    request(`/appointments/${encodeURIComponent(id)}`, { ...opts, method: 'PATCH', body: { status } }),
+
+  // Staff dashboard numbers.
+  dashboard: (opts) => request('/dashboard', opts),
+
   // Any logged-in user: { unread, items: [{ id, message, link, createdAt, read }] }.
   notifications: async (opts) => {
     const data = await request('/notifications', opts);

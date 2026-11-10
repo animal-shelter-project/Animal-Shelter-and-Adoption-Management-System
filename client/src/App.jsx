@@ -9,6 +9,7 @@ import Account from './pages/Account.jsx';
 import Notifications from './pages/Notifications.jsx';
 import Register from './pages/Register.jsx';
 import StaffAccounts from './pages/StaffAccounts.jsx';
+import StaffDashboard from './pages/StaffDashboard.jsx';
 import Login from './pages/Login.jsx';
 import MyApplications from './pages/MyApplications.jsx';
 import NotFound from './pages/NotFound.jsx';
@@ -49,6 +50,14 @@ export default function App() {
               element={
                 <RequireRole>
                   <Notifications />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/staff/dashboard"
+              element={
+                <RequireRole role="Staff">
+                  <StaffDashboard />
                 </RequireRole>
               }
             />

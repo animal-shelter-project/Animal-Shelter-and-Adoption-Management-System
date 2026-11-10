@@ -67,6 +67,10 @@ export function formatFee(fee) {
 export function parseDate(value) {
   if (!value) return null;
   const s = String(value);
+  // A plain date ("2026-11-10", e.g. a medical record) is a calendar day,
+  // not midnight UTC, so it must not shift to the day before.
+  const day = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (day) return new Date(Number(day[1]), Number(day[2]) - 1, Number(day[3]));
   const iso = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}(:\d{2})?$/.test(s) ? `${s.replace(' ', 'T')}Z` : s;
   const d = new Date(iso);
   return Number.isNaN(d.getTime()) ? null : d;
@@ -77,4 +81,13 @@ export function formatDate(value) {
   const d = parseDate(value) || new Date(NaN);
   if (Number.isNaN(d.getTime())) return String(value);
   return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+// Appointment times are the shelter's local time, "2026-11-20 14:30".
+// -> "Fri, Nov 20, 2:30 PM"
+export function formatWhen(stamp) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/.exec(String(stamp || ''));
+  if (!m) return stamp || '';
+  const d = new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]);
+  return d.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 }

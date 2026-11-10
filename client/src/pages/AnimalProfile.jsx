@@ -2,6 +2,8 @@ import { Link, useLocation, useParams } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAuth } from '../auth/useAuth.js';
 import AnimalPhoto from '../components/AnimalPhoto.jsx';
+import AppointmentsPanel from '../components/AppointmentsPanel.jsx';
+import MedicalRecordsPanel from '../components/MedicalRecordsPanel.jsx';
 import StaffAnimalTools from '../components/StaffAnimalTools.jsx';
 import StaffStatusPanel from '../components/StaffStatusPanel.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
@@ -189,6 +191,8 @@ export default function AnimalProfile() {
       </article>
       {isStaff && <StaffAnimalTools animal={animal} onChanged={refresh} />}
       {isStaff && !animal.archived && <StaffStatusPanel animal={animal} onChanged={refresh} />}
+      {isStaff && <MedicalRecordsPanel animal={animal} />}
+      {isStaff && !animal.archived && <AppointmentsPanel animal={animal} />}
     </div>
   );
 }

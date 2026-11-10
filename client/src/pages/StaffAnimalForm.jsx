@@ -127,7 +127,9 @@ function AddAnimalForm() {
     species: previewSpecies || 'Other',
     breed: values.breed.trim(),
     age: /^\d+$/.test(values.age.trim()) ? Number(values.age) : null,
-    ageMonths: /^\d+$/.test(values.ageMonths.trim()) ? Number(values.ageMonths) : 0,
+    ageMonths: /^\d+$/.test(values.age.trim())
+      ? /^\d+$/.test(values.ageMonths.trim()) ? Number(values.ageMonths) : 0
+      : null,
     sex: values.sex === 'Unknown' ? '' : values.sex,
     status: values.status,
   };

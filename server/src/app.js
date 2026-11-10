@@ -35,6 +35,11 @@ app.use("/api/animals", require("./routes/animals"));
 app.use("/api/applications", require("./routes/applications"));
 app.use("/api/users", require("./routes/users"));
 app.use("/api/notifications", require("./routes/notifications"));
+app.use("/api/appointments", require("./routes/appointments"));
+
+const DashboardController = require("./controllers/DashboardController");
+const { requireAuth, requireRole } = require("./middleware/auth");
+app.get("/api/dashboard", requireAuth, requireRole("Staff"), DashboardController.summary);
 
 app.use((req, res) => {
   res.status(404).json({
