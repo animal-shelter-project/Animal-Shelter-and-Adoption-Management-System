@@ -1,50 +1,12 @@
 import { useRef, useState } from 'react';
 import { api } from '../api.js';
+import { PHOTO_TYPES as TYPES, photoToDataUrl } from '../photo.js';
 
 // Staff tools on an animal's profile (v2): add or change its photo, remove
 // it, and archive the animal (hide it from the catalog) or restore it.
 //
 // Photos: JPEG, PNG or WebP. A file over 2 MB is shrunk in the browser
 // (longest side 1600 px, JPEG) before upload when the browser can.
-
-export const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
-const TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-
-const readAsDataUrl = (blob) =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error('Could not read that file.'));
-    reader.readAsDataURL(blob);
-  });
-
-// Shrinks a large photo. Resolves to a Blob, or null if the browser can't.
-async function shrink(file) {
-  if (typeof createImageBitmap !== 'function') return null;
-  try {
-    const bitmap = await createImageBitmap(file);
-    const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.round(bitmap.width * scale);
-    canvas.height = Math.round(bitmap.height * scale);
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return null;
-    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-    return await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.85));
-  } catch {
-    return null;
-  }
-}
-
-export async function photoToDataUrl(file) {
-  if (!TYPES.includes(file.type)) throw new Error('Choose a JPEG, PNG or WebP photo.');
-  let blob = file;
-  if (file.size > MAX_PHOTO_BYTES) {
-    blob = await shrink(file);
-    if (!blob || blob.size > MAX_PHOTO_BYTES) throw new Error('Photos must be 2 MB or smaller.');
-  }
-  return readAsDataUrl(blob);
-}
 
 export default function StaffAnimalTools({ animal, onChanged }) {
   const fileInput = useRef(null);
