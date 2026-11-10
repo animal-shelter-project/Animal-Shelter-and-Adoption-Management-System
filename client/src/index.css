@@ -392,3 +392,13 @@ fieldset.good-with legend { font-size: 0.9rem; font-weight: 700; padding: 0 0.35
 .staff-tools .actions { margin-top: 0.5rem; }
 .staff-tools .notice { margin-bottom: 0.75rem; }
 .good-with .field-row .field { flex: 1 1 120px; }
+.filters-plain { margin: 0 0 1.5rem; }
+.account-card { margin-bottom: 1.75rem; }
+.account-card h2 { font-size: 1.5rem; }
+.temp-password { font-size: 1.15rem; font-weight: 700; background: var(--paper); padding: 0.1rem 0.5rem; border-radius: 8px; border: 2px solid var(--ink); }
+.auth-links { display: flex; flex-direction: column; gap: 0.4rem; }
+.nav-name a { color: inherit; }
+a.nav-name { text-decoration: none; }
+a.nav-name:hover { color: var(--ink); text-decoration: underline; }
+.nav-signup { font-weight: 700; color: var(--ink); text-decoration: none; }
+.nav-signup:hover { text-decoration: underline; }

@@ -74,6 +74,14 @@ db.exec(`
 // change an existing table, so each missing column is added here. This keeps
 // everyone's existing shelter.db working without deleting data.
 const MIGRATIONS = {
+  users: [
+    // Contact details, so staff can reach and vet an applicant.
+    ["name", "TEXT NOT NULL DEFAULT ''"],
+    ["phone", "TEXT NOT NULL DEFAULT ''"],
+    ["address", "TEXT NOT NULL DEFAULT ''"],
+    // Bumped when the password changes: older login tokens stop working.
+    ["token_version", "INTEGER NOT NULL DEFAULT 0"],
+  ],
   applications: [
     ["household_details", "TEXT NOT NULL DEFAULT ''"],
   ],

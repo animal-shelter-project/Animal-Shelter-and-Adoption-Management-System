@@ -4,7 +4,8 @@ import { createContext, useContext } from 'react';
 // (required by the repo's eslint react-refresh rule).
 export const AuthContext = createContext(null);
 
-// { user, token, isLoggedIn, isStaff, isAdopter, sessionExpired, login, logout }
+// { user, token, isLoggedIn, isStaff, isAdopter, sessionExpired,
+//   login, register, setSession, updateUser, logout }
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used inside <AuthProvider>');

@@ -27,6 +27,10 @@ function requireAuth(req, res, next) {
   if (!user) {
     return res.status(401).json({ error: "This account no longer exists. Please log in again." });
   }
+  // The password was changed since this token was issued.
+  if ((payload.tv ?? 0) !== (user.token_version ?? 0)) {
+    return res.status(401).json({ error: "Your password was changed. Please log in again." });
+  }
 
   req.user = user;
   return next();
@@ -54,7 +58,7 @@ function optionalAuth(req, res, next) {
     try {
       const payload = AuthService.verifyToken(token);
       const user = User.findById(payload.id);
-      if (user) req.user = user;
+      if (user && (payload.tv ?? 0) === (user.token_version ?? 0)) req.user = user;
     } catch {
       // expired or invalid: treat as a visitor
     }

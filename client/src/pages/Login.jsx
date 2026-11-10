@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth.js';
 import { redirectAfterLogin, safeRedirect } from '../auth/redirects.js';
 import { useDocumentTitle } from '../hooks.js';
@@ -109,6 +109,17 @@ export default function Login() {
         <button type="submit" className="btn btn-primary btn-block" disabled={submitting}>
           {submitting ? 'Logging in…' : 'Log in'}
         </button>
+        <div className="auth-links small">
+          <p>
+            New here?{' '}
+            <Link to="/register" state={from ? { from } : undefined}>
+              Create an account
+            </Link>
+          </p>
+          <p className="muted">
+            Forgot your password? Call the shelter and a staff member will reset it for you.
+          </p>
+        </div>
       </form>
     </div>
   );

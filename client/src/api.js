@@ -18,6 +18,10 @@ export const BASE = RAW_BASE.replace(/\/+$/, ''); // tolerate a trailing slash i
 export const DEFAULT_TIMEOUT_MS = 10000;
 const STORAGE_KEY = 'shelter.auth';
 export const AUTH_EXPIRED_EVENT = 'shelter:auth-expired';
+export const AUTH_REFRESHED_EVENT = 'shelter:auth-refreshed';
+// v2: a session with less than this left is renewed on the next successful
+// request, so someone who is actively working is never logged out mid-task.
+export const REFRESH_WINDOW_MS = 30 * 60 * 1000;
 
 // ---- JWT expiry (read-only decode; the server still verifies the signature) --
 
@@ -111,8 +115,28 @@ function messageFrom(status, data) {
 
 // ---- Core helper ------------------------------------------------------------
 
+// Renews the login token if it expires soon. At most one renewal at a time;
+// a failed renewal is ignored (the normal expiry rules still apply).
+let refreshing = null;
+function maybeRefresh(token) {
+  const exp = tokenExpiry(token);
+  if (exp == null || refreshing || exp - Date.now() > REFRESH_WINDOW_MS) return;
+  refreshing = request('/auth/refresh', { method: 'POST', refresh: false })
+    .then((data) => {
+      const user = normalizeUser(data?.user);
+      if (data?.token && user && getToken() === token) {
+        saveAuth({ token: data.token, user });
+        window.dispatchEvent(new CustomEvent(AUTH_REFRESHED_EVENT));
+      }
+    })
+    .catch(() => {})
+    .finally(() => {
+      refreshing = null;
+    });
+}
+
 export async function request(path, options = {}) {
-  const { timeout = DEFAULT_TIMEOUT_MS, auth = true, signal, ...fetchOptions } = options;
+  const { timeout = DEFAULT_TIMEOUT_MS, auth = true, refresh = true, signal, ...fetchOptions } = options;
   const headers = { Accept: 'application/json', ...(fetchOptions.headers || {}) };
 
   const token = auth ? getToken() : null;
@@ -178,7 +202,16 @@ export async function request(path, options = {}) {
     }
     throw new ApiError(res.status, messageFrom(res.status, data), data);
   }
+  if (token && refresh) maybeRefresh(token);
   return data;
+}
+
+// { token, user } from a login-style response.
+function session(data) {
+  const token = data?.token ?? data?.accessToken ?? data?.access_token;
+  const user = normalizeUser(data?.user ?? data?.data?.user);
+  if (!token || !user) throw new ApiError(500, 'Unexpected login response from the server.');
+  return { token, user };
 }
 
 // Treat "aborted because the page moved on" as a non-error.
@@ -251,16 +284,45 @@ export const api = {
   restoreAnimal: async (id, opts) =>
     oneAnimal(await request(`/animals/${encodeURIComponent(id)}/restore`, { ...opts, method: 'POST' })),
 
-  login: async (email, password) => {
-    const data = await request('/auth/login', {
-      method: 'POST',
-      body: { email, password },
-      auth: false, // never send a stale token with a login attempt
-    });
-    const token = data?.token ?? data?.accessToken ?? data?.access_token;
-    const user = normalizeUser(data?.user ?? data?.data?.user);
-    if (!token || !user) throw new ApiError(500, 'Unexpected login response from the server.');
-    return { token, user };
+  login: async (email, password) =>
+    session(
+      await request('/auth/login', {
+        method: 'POST',
+        body: { email, password },
+        auth: false, // never send a stale token with a login attempt
+      }),
+    ),
+
+  // v2: sign up as an adopter. details = { email, password, name, phone, address }
+  register: async (details) =>
+    session(await request('/auth/register', { method: 'POST', body: details, auth: false })),
+
+  me: async (opts) => normalizeUser(await request('/auth/me', opts)),
+
+  updateMe: async (details, opts) =>
+    normalizeUser(await request('/auth/me', { ...opts, method: 'PUT', body: details })),
+
+  // Returns a fresh { token, user }: the old token stops working.
+  changePassword: async (currentPassword, newPassword, opts) =>
+    session(
+      await request('/auth/password', {
+        ...opts,
+        method: 'PUT',
+        body: { currentPassword, newPassword },
+        refresh: false,
+      }),
+    ),
+
+  // Staff only.
+  listAdopters: async (q, opts) => {
+    const data = await request(`/users${buildQuery({ q })}`, opts);
+    return (Array.isArray(data) ? data : []).map(normalizeUser).filter(Boolean);
+  },
+
+  // Staff only. Returns { user, temporaryPassword }.
+  resetPassword: async (id, opts) => {
+    const data = await request(`/users/${encodeURIComponent(id)}/reset-password`, { ...opts, method: 'POST' });
+    return { user: normalizeUser(data?.user), temporaryPassword: data?.temporaryPassword };
   },
 
   // Staff only (proposal R-01 / US-01). Returns the new animal.

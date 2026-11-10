@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AUTH_EXPIRED_EVENT,
+  AUTH_REFRESHED_EVENT,
   AUTH_STORAGE_KEY,
   api,
   clearAuth,
@@ -29,6 +30,30 @@ export default function AuthProvider({ children }) {
     return result.user;
   }, []);
 
+  // v2: sign-up logs the new adopter in.
+  const register = useCallback(async (details) => {
+    const result = await api.register(details);
+    saveAuth(result);
+    setState({ auth: result, sessionExpired: false });
+    return result.user;
+  }, []);
+
+  // A new { token, user } from a password change.
+  const setSession = useCallback((result) => {
+    saveAuth(result);
+    setState({ auth: result, sessionExpired: false });
+  }, []);
+
+  // Updated contact details for the logged-in user.
+  const updateUser = useCallback((user) => {
+    setState((s) => {
+      if (!s.auth) return s;
+      const auth = { ...s.auth, user: { ...s.auth.user, ...user } };
+      saveAuth(auth);
+      return { ...s, auth };
+    });
+  }, []);
+
   const logout = useCallback(() => {
     clearAuth();
     setState({ auth: null, sessionExpired: false });
@@ -40,6 +65,13 @@ export default function AuthProvider({ children }) {
       setState((s) => ({ auth: null, sessionExpired: s.sessionExpired || Boolean(s.auth) }));
     window.addEventListener(AUTH_EXPIRED_EVENT, onExpired);
     return () => window.removeEventListener(AUTH_EXPIRED_EVENT, onExpired);
+  }, []);
+
+  // api.js renewed the token for an active session.
+  useEffect(() => {
+    const onRefreshed = () => setState((s) => ({ ...s, auth: loadAuth() }));
+    window.addEventListener(AUTH_REFRESHED_EVENT, onRefreshed);
+    return () => window.removeEventListener(AUTH_REFRESHED_EVENT, onRefreshed);
   }, []);
 
   // Another tab logged in or out.
@@ -74,9 +106,12 @@ export default function AuthProvider({ children }) {
       isAdopter: auth?.user?.role === 'Adopter',
       sessionExpired,
       login,
+      register,
+      setSession,
+      updateUser,
       logout,
     }),
-    [auth, sessionExpired, login, logout],
+    [auth, sessionExpired, login, register, setSession, updateUser, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

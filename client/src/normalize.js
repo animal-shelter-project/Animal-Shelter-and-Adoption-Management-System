@@ -147,6 +147,8 @@ export function normalizeUser(raw) {
     name: cleanText(raw.name ?? raw.fullName ?? raw.username),
     email: cleanText(raw.email),
     role: canonicalRole(raw.role),
+    phone: cleanText(raw.phone),
+    address: cleanText(raw.address),
   };
 }
 

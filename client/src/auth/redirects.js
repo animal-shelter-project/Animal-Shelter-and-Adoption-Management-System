@@ -6,7 +6,7 @@
 export function safeRedirect(path, fallback = '/animals') {
   if (typeof path !== 'string') return fallback;
   if (!path.startsWith('/') || path.startsWith('//') || path.startsWith('/\\')) return fallback;
-  if (path.startsWith('/login')) return fallback; // avoid a login loop
+  if (path.startsWith('/login') || path.startsWith('/register')) return fallback; // avoid a login loop
   return path;
 }
 
