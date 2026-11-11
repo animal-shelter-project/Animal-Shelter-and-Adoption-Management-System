@@ -65,9 +65,19 @@ db.exec(`
     changed_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
 
+  CREATE TABLE IF NOT EXISTS medical_records (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    animal_id INTEGER NOT NULL REFERENCES animals(id) ON DELETE CASCADE,
+    record_date TEXT NOT NULL,
+    record_type TEXT NOT NULL,
+    notes TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+
   CREATE INDEX IF NOT EXISTS idx_applications_applicant ON applications(applicant_id);
   CREATE INDEX IF NOT EXISTS idx_status_history_animal ON status_history(animal_id, id);
   CREATE INDEX IF NOT EXISTS idx_animals_status ON animals(status);
+  CREATE INDEX IF NOT EXISTS idx_medical_records_animal_date ON medical_records(animal_id, record_date DESC);
 `);
 
 // Databases created before household_details existed don't get it from
