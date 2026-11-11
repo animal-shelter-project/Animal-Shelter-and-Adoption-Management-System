@@ -18,6 +18,10 @@ export const BASE = RAW_BASE.replace(/\/+$/, ''); // tolerate a trailing slash i
 export const DEFAULT_TIMEOUT_MS = 10000;
 const STORAGE_KEY = 'shelter.auth';
 export const AUTH_EXPIRED_EVENT = 'shelter:auth-expired';
+export const AUTH_REFRESHED_EVENT = 'shelter:auth-refreshed';
+// v2: a session with less than this left is renewed on the next successful
+// request, so someone who is actively working is never logged out mid-task.
+export const REFRESH_WINDOW_MS = 30 * 60 * 1000;
 
 // ---- JWT expiry (read-only decode; the server still verifies the signature) --
 
@@ -111,8 +115,28 @@ function messageFrom(status, data) {
 
 // ---- Core helper ------------------------------------------------------------
 
+// Renews the login token if it expires soon. At most one renewal at a time;
+// a failed renewal is ignored (the normal expiry rules still apply).
+let refreshing = null;
+function maybeRefresh(token) {
+  const exp = tokenExpiry(token);
+  if (exp == null || refreshing || exp - Date.now() > REFRESH_WINDOW_MS) return;
+  refreshing = request('/auth/refresh', { method: 'POST', refresh: false })
+    .then((data) => {
+      const user = normalizeUser(data?.user);
+      if (data?.token && user && getToken() === token) {
+        saveAuth({ token: data.token, user });
+        window.dispatchEvent(new CustomEvent(AUTH_REFRESHED_EVENT));
+      }
+    })
+    .catch(() => {})
+    .finally(() => {
+      refreshing = null;
+    });
+}
+
 export async function request(path, options = {}) {
-  const { timeout = DEFAULT_TIMEOUT_MS, auth = true, signal, ...fetchOptions } = options;
+  const { timeout = DEFAULT_TIMEOUT_MS, auth = true, refresh = true, signal, ...fetchOptions } = options;
   const headers = { Accept: 'application/json', ...(fetchOptions.headers || {}) };
 
   const token = auth ? getToken() : null;
@@ -178,7 +202,16 @@ export async function request(path, options = {}) {
     }
     throw new ApiError(res.status, messageFrom(res.status, data), data);
   }
+  if (token && refresh) maybeRefresh(token);
   return data;
+}
+
+// { token, user } from a login-style response.
+function session(data) {
+  const token = data?.token ?? data?.accessToken ?? data?.access_token;
+  const user = normalizeUser(data?.user ?? data?.data?.user);
+  if (!token || !user) throw new ApiError(500, 'Unexpected login response from the server.');
+  return { token, user };
 }
 
 // Treat "aborted because the page moved on" as a non-error.
@@ -198,64 +231,127 @@ export function buildQuery(params = {}) {
   return s ? `?${s}` : '';
 }
 
+// Photos are served by the API server (/uploads/...), which is a different
+// origin from this app in development, so make their URLs absolute.
+const API_ORIGIN = BASE.replace(/\/api$/, '');
+export function withPhotoOrigin(animal) {
+  if (animal?.photoUrl && animal.photoUrl.startsWith('/uploads/')) {
+    return { ...animal, photoUrl: `${API_ORIGIN}${animal.photoUrl}` };
+  }
+  return animal;
+}
+
+// One animal from a response, or a 500 if the server sent something else.
+function oneAnimal(data, missingStatus = 500) {
+  const animal = normalizeAnimal(unwrapOne(data, 'animal'));
+  if (!animal?.id) {
+    throw new ApiError(missingStatus, missingStatus === 404 ? 'Animal not found.' : 'Unexpected response from the server.');
+  }
+  return withPhotoOrigin(animal);
+}
+
 export const api = {
   listAnimals: async (filters, opts) =>
-    normalizeAnimals(await request(`/animals${buildQuery(filters)}`, opts)),
+    normalizeAnimals(await request(`/animals${buildQuery(filters)}`, opts)).map(withPhotoOrigin),
 
-  getAnimal: async (id, opts) => {
-    const data = await request(`/animals/${encodeURIComponent(id)}`, opts);
-    const animal = normalizeAnimal(unwrapOne(data, 'animal'));
-    if (!animal?.id) throw new ApiError(404, 'Animal not found.');
-    return animal;
+  getAnimal: async (id, opts) =>
+    oneAnimal(await request(`/animals/${encodeURIComponent(id)}`, opts), 404),
+
+  // Breeds already used, for the form's suggestions.
+  breeds: async (species, opts) => {
+    const data = await request(`/animals/breeds${buildQuery({ species })}`, opts);
+    return Array.isArray(data) ? data.filter((b) => typeof b === 'string') : [];
   },
 
-  login: async (email, password) => {
-    const data = await request('/auth/login', {
-      method: 'POST',
-      body: { email, password },
-      auth: false, // never send a stale token with a login attempt
-    });
-    const token = data?.token ?? data?.accessToken ?? data?.access_token;
-    const user = normalizeUser(data?.user ?? data?.data?.user);
-    if (!token || !user) throw new ApiError(500, 'Unexpected login response from the server.');
-    return { token, user };
+  // Staff only. image is a data: URL (JPEG, PNG or WebP, 2 MB max).
+  uploadAnimalPhoto: async (id, image, opts) =>
+    oneAnimal(
+      await request(`/animals/${encodeURIComponent(id)}/photo`, {
+        timeout: 30000,
+        ...opts,
+        method: 'PUT',
+        body: { image },
+      }),
+    ),
+
+  removeAnimalPhoto: async (id, opts) =>
+    oneAnimal(await request(`/animals/${encodeURIComponent(id)}/photo`, { ...opts, method: 'DELETE' })),
+
+  // Staff only: hide from the catalog / bring back.
+  archiveAnimal: async (id, opts) =>
+    oneAnimal(await request(`/animals/${encodeURIComponent(id)}`, { ...opts, method: 'DELETE' })),
+
+  restoreAnimal: async (id, opts) =>
+    oneAnimal(await request(`/animals/${encodeURIComponent(id)}/restore`, { ...opts, method: 'POST' })),
+
+  login: async (email, password) =>
+    session(
+      await request('/auth/login', {
+        method: 'POST',
+        body: { email, password },
+        auth: false, // never send a stale token with a login attempt
+      }),
+    ),
+
+  // v2: sign up as an adopter. details = { email, password, name, phone, address }
+  register: async (details) =>
+    session(await request('/auth/register', { method: 'POST', body: details, auth: false })),
+
+  me: async (opts) => normalizeUser(await request('/auth/me', opts)),
+
+  updateMe: async (details, opts) =>
+    normalizeUser(await request('/auth/me', { ...opts, method: 'PUT', body: details })),
+
+  // Returns a fresh { token, user }: the old token stops working.
+  changePassword: async (currentPassword, newPassword, opts) =>
+    session(
+      await request('/auth/password', {
+        ...opts,
+        method: 'PUT',
+        body: { currentPassword, newPassword },
+        refresh: false,
+      }),
+    ),
+
+  // Staff only.
+  listAdopters: async (q, opts) => {
+    const data = await request(`/users${buildQuery({ q })}`, opts);
+    return (Array.isArray(data) ? data : []).map(normalizeUser).filter(Boolean);
+  },
+
+  // Staff only. Returns { user, temporaryPassword }.
+  resetPassword: async (id, opts) => {
+    const data = await request(`/users/${encodeURIComponent(id)}/reset-password`, { ...opts, method: 'POST' });
+    return { user: normalizeUser(data?.user), temporaryPassword: data?.temporaryPassword };
   },
 
   // Staff only (proposal R-01 / US-01). Returns the new animal.
-  createAnimal: async (animal, opts) => {
-    const data = await request('/animals', { ...opts, method: 'POST', body: animal });
-    const created = normalizeAnimal(unwrapOne(data, 'animal'));
-    if (!created?.id) throw new ApiError(500, 'Unexpected response from the server.');
-    return created;
-  },
+  // A 409 with err.body.duplicate means a same-named animal of that species
+  // exists; send allowDuplicate: true to add it anyway.
+  createAnimal: async (animal, opts) =>
+    oneAnimal(await request('/animals', { ...opts, method: 'POST', body: animal })),
 
   // Staff only (proposal R-01 / US-06). Saves the animal's details; omitted
   // fields keep their values. Status changes go through changeAnimalStatus.
-  updateAnimal: async (id, details, opts) => {
-    const data = await request(`/animals/${encodeURIComponent(id)}`, {
-      ...opts,
-      method: 'PUT',
-      body: details,
-    });
-    const animal = normalizeAnimal(unwrapOne(data, 'animal'));
-    if (!animal?.id) throw new ApiError(500, 'Unexpected response from the server.');
-    return animal;
-  },
+  updateAnimal: async (id, details, opts) =>
+    oneAnimal(
+      await request(`/animals/${encodeURIComponent(id)}`, { ...opts, method: 'PUT', body: details }),
+    ),
 
   // Staff only (proposal R-09). Oldest first.
   getAnimalHistory: async (id, opts) =>
     normalizeHistory(await request(`/animals/${encodeURIComponent(id)}/history`, opts)),
 
   // Staff only (proposal R-09 / R-12). Returns the updated animal.
-  changeAnimalStatus: async (id, status, note, opts) => {
-    const data = await request(`/animals/${encodeURIComponent(id)}/status`, {
-      ...opts,
-      method: 'PATCH',
-      body: note ? { status, note } : { status },
-    });
-    const animal = normalizeAnimal(unwrapOne(data, 'animal'));
-    if (!animal?.id) throw new ApiError(500, 'Unexpected response from the server.');
-    return animal;
+  // v2: changing to Adopted by hand needs adopterId (the adopter's account).
+  changeAnimalStatus: async (id, status, note, opts = {}) => {
+    const { adopterId, ...rest } = opts;
+    const body = { status };
+    if (note) body.note = note;
+    if (adopterId) body.adopterId = Number(adopterId);
+    return oneAnimal(
+      await request(`/animals/${encodeURIComponent(id)}/status`, { ...rest, method: 'PATCH', body }),
+    );
   },
 
   myApplications: async (opts) =>
@@ -263,12 +359,68 @@ export const api = {
 
   // Adopter only (proposal R-05 / US-05). 201 with the new application;
   // 400 field errors, 404 unknown animal, 409 animal not Available.
-  submitApplication: (animalId, householdDetails, opts) =>
+  // v2: answers = { homeType, ownOrRent, landlordOk, hasYard, adults,
+  // children, otherPets, hoursAlone }.
+  submitApplication: (animalId, householdDetails, answers = {}, opts) =>
     request('/applications', {
       ...opts,
       method: 'POST',
-      body: { animalId, householdDetails },
+      body: { animalId, householdDetails, ...answers },
     }),
+
+  // Adopter: withdraw your own Pending application.
+  withdrawApplication: async (id, opts) =>
+    normalizeApplications([
+      await request(`/applications/${encodeURIComponent(id)}/withdraw`, { ...opts, method: 'PUT' }),
+    ])[0],
+
+  // Staff: status = pending | decided | all | Approved | Rejected | Withdrawn | Returned.
+  staffApplications: async (status = 'pending', opts) =>
+    normalizeApplications(await request(`/applications${buildQuery({ status })}`, opts)),
+
+  // Staff: private notes on an application.
+  saveApplicationNotes: async (id, notes, opts) =>
+    normalizeApplications([
+      await request(`/applications/${encodeURIComponent(id)}/notes`, { ...opts, method: 'PUT', body: { notes } }),
+    ])[0],
+
+  // Staff: medical records (proposal R-10), newest first.
+  medicalRecords: async (animalId, opts) => {
+    const data = await request(`/animals/${encodeURIComponent(animalId)}/medical-records`, opts);
+    return Array.isArray(data) ? data : [];
+  },
+
+  // record = { recordDate: 'YYYY-MM-DD', recordType, notes }
+  addMedicalRecord: (animalId, record, opts) =>
+    request(`/animals/${encodeURIComponent(animalId)}/medical-records`, { ...opts, method: 'POST', body: record }),
+
+  // Staff: appointments (proposal R-11), soonest first.
+  appointments: async (animalId, opts) => {
+    const data = await request(`/animals/${encodeURIComponent(animalId)}/appointments`, opts);
+    return Array.isArray(data) ? data : [];
+  },
+
+  // appointment = { startsAt: 'YYYY-MM-DDTHH:MM', durationMinutes, purpose, notes }
+  bookAppointment: (animalId, appointment, opts) =>
+    request(`/animals/${encodeURIComponent(animalId)}/appointments`, { ...opts, method: 'POST', body: appointment }),
+
+  // status: 'Done' | 'Cancelled'
+  setAppointmentStatus: (id, status, opts) =>
+    request(`/appointments/${encodeURIComponent(id)}`, { ...opts, method: 'PATCH', body: { status } }),
+
+  // Staff dashboard numbers.
+  dashboard: (opts) => request('/dashboard', opts),
+
+  // Any logged-in user: { unread, items: [{ id, message, link, createdAt, read }] }.
+  notifications: async (opts) => {
+    const data = await request('/notifications', opts);
+    return { unread: Number(data?.unread) || 0, items: Array.isArray(data?.items) ? data.items : [] };
+  },
+
+  readNotifications: async (opts) => {
+    const data = await request('/notifications/read', { ...opts, method: 'POST' });
+    return { unread: Number(data?.unread) || 0, items: Array.isArray(data?.items) ? data.items : [] };
+  },
 
   // Staff only (proposal R-06). Pending applications, oldest first, each with
   // the animal's name and the applicant's email.

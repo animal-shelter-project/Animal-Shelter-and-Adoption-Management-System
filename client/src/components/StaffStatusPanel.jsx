@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../api.js';
 import { MANUAL_STATUS_CHANGES } from '../constants.js';
 import { formatDate } from '../format.js';
-import { useResource } from '../hooks.js';
+import { useDebounced, useResource } from '../hooks.js';
 import StatusBadge from './StatusBadge.jsx';
 
 // Staff-only panel on the animal profile (proposal R-09, R-12):
@@ -12,6 +12,9 @@ import StatusBadge from './StatusBadge.jsx';
 //    (Pending is left to the application workflow, so it's never offered).
 // After a change it refreshes the history and tells the profile to refresh,
 // so the badge and the Apply button update at once.
+// v2: choosing Adopted asks which adopter account adopted the animal (a
+// walk-in adoption), so every adoption is on record. Adopted -> Available
+// is labelled as a return.
 const MAX_NOTE = 200;
 
 export default function StaffStatusPanel({ animal, onChanged }) {
@@ -90,15 +93,30 @@ function ChangeStatusForm({ animal, options, onStart, onChanged }) {
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [adopterId, setAdopterId] = useState('');
+  const [adopterQuery, setAdopterQuery] = useState('');
+  const needsAdopter = status === 'Adopted';
+  const q = useDebounced(adopterQuery, 300).trim();
+  const adopters = useResource(needsAdopter ? `adopters:${q}` : 'adopters:off', (signal) =>
+    needsAdopter ? api.listAdopters(q, { signal }) : Promise.resolve([]),
+  );
+  const returning = animal.status === 'Adopted' && status === 'Available';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (saving) return;
+    if (needsAdopter && !adopterId) {
+      setError('Choose who adopted this animal.');
+      document.getElementById('adopter-select')?.focus();
+      return;
+    }
     setSaving(true);
     setError('');
     onStart();
     try {
-      const updated = await api.changeAnimalStatus(animal.id, status, note.trim());
+      const updated = await api.changeAnimalStatus(animal.id, status, note.trim(), {
+        adopterId: needsAdopter ? adopterId : undefined,
+      });
       setNote('');
       onChanged(updated); // the profile refreshes; the new status re-keys (resets) this form
     } catch (err) {
@@ -132,12 +150,43 @@ function ChangeStatusForm({ animal, options, onStart, onChanged }) {
             id="status-note"
             type="text"
             maxLength={MAX_NOTE}
-            placeholder="e.g. Went to a foster home"
+            placeholder={returning ? 'e.g. Returned: allergies in the family' : 'e.g. Went to a foster home'}
             value={note}
             onChange={(e) => setNote(e.target.value)}
           />
         </div>
       </div>
+      {returning && (
+        <p className="muted small">This records a return: the adoption will be marked Returned.</p>
+      )}
+      {needsAdopter && (
+        <div className="field-row adopter-pick">
+          <div className="field">
+            <label htmlFor="adopter-search">Find the adopter</label>
+            <input
+              id="adopter-search"
+              type="search"
+              placeholder="Name or email"
+              value={adopterQuery}
+              onChange={(e) => setAdopterQuery(e.target.value)}
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="adopter-select">Adopted by</label>
+            <select id="adopter-select" value={adopterId} onChange={(e) => setAdopterId(e.target.value)}>
+              <option value="">Choose an adopter…</option>
+              {(adopters.data || []).map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.name ? `${u.name} (${u.email})` : u.email}
+                </option>
+              ))}
+            </select>
+            <span className="muted small">
+              Not listed? Ask them to <Link to="/register">create an account</Link> first.
+            </span>
+          </div>
+        </div>
+      )}
       <button type="submit" className="btn btn-primary" disabled={saving}>
         {saving ? 'Saving…' : 'Update status'}
       </button>

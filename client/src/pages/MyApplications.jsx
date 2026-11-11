@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { api } from '../api.js';
 import StatusBadge from '../components/StatusBadge.jsx';
@@ -10,14 +11,44 @@ const newestFirst = (list) =>
 // An adopter's own applications, newest first (plan item 13).
 // Uses GET /api/applications/mine (Adopter only). If the server in use
 // doesn't have that route yet (404/501), the page says so instead of failing.
+// v2: a Pending application can be withdrawn (the animal becomes Available
+// for other families again); Withdrawn and Returned statuses are shown.
+const STATUS_HELP = {
+  Pending: 'Staff are reviewing it.',
+  Approved: 'Approved! The shelter will call you.',
+  Rejected: 'Not approved this time.',
+  Withdrawn: 'You withdrew it.',
+  Returned: 'The animal was returned to the shelter.',
+};
+
 export default function MyApplications() {
   const applied = useLocation().state?.applied;
   useDocumentTitle('My applications');
-  const { data: apps, error, loading, reload } = useResource(
+  const [busyId, setBusyId] = useState(null);
+  const [message, setMessage] = useState(null);
+  const { data: apps, error, loading, reload, refresh } = useResource(
     'applications:mine',
     (signal) => api.myApplications({ signal }).then(newestFirst),
   );
   const unavailable = error && (error.status === 404 || error.status === 501);
+
+  const withdraw = async (app) => {
+    if (busyId) return;
+    if (window.confirm?.(`Withdraw your application for ${app.animalName}? ${app.animalName} will be open to other families again.`) === false) {
+      return;
+    }
+    setBusyId(app.id);
+    setMessage(null);
+    try {
+      await api.withdrawApplication(app.id);
+      setMessage({ kind: 'success', text: `Your application for ${app.animalName} was withdrawn.` });
+    } catch (err) {
+      setMessage({ kind: 'error', text: err.message || 'Could not withdraw the application.' });
+    } finally {
+      setBusyId(null);
+      refresh();
+    }
+  };
 
   return (
     <div className="page narrow">
@@ -29,6 +60,12 @@ export default function MyApplications() {
       {applied && (
         <div className="notice notice-success" role="status">
           Your application for {applied.animalName} was submitted. Staff will review it soon.
+        </div>
+      )}
+
+      {message && (
+        <div className={`notice ${message.kind === 'error' ? 'error' : 'notice-success'}`} role={message.kind === 'error' ? 'alert' : 'status'}>
+          {message.text}
         </div>
       )}
 
@@ -63,6 +100,9 @@ export default function MyApplications() {
                 <th scope="col">Animal</th>
                 <th scope="col">Submitted</th>
                 <th scope="col">Status</th>
+                <th scope="col">
+                  <span className="visually-hidden">Actions</span>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -80,6 +120,20 @@ export default function MyApplications() {
                   <td>{formatDate(app.submittedAt)}</td>
                   <td>
                     <StatusBadge status={app.status} />
+                    {STATUS_HELP[app.status] && <span className="muted small status-help">{STATUS_HELP[app.status]}</span>}
+                  </td>
+                  <td>
+                    {app.status === 'Pending' && (
+                      <button
+                        type="button"
+                        className="btn btn-ghost"
+                        disabled={busyId != null}
+                        onClick={() => withdraw(app)}
+                        aria-label={`Withdraw application for ${app.animalName}`}
+                      >
+                        {busyId === app.id ? 'Withdrawing…' : 'Withdraw'}
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}

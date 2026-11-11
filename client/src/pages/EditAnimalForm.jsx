@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api.js';
-import { OTHER_SPECIES, TEXT_LIMITS, validateAnimalForm } from '../animalForm.js';
+import { OTHER_SPECIES, TEXT_LIMITS, validateAnimalForm, yesNoToForm } from '../animalForm.js';
+import AnimalDetailsFields, { BreedField, FieldError } from '../components/AnimalDetailsFields.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import { SPECIES } from '../constants.js';
 import { useResource } from '../hooks.js';
@@ -20,7 +21,7 @@ import { useResource } from '../hooks.js';
 //    never sends a status.
 //  - Can't double-submit. After saving, the page stays open with a
 //    confirmation and a link back to the profile.
-const FIELD_ORDER = ['name', 'species', 'breed', 'age'];
+const FIELD_ORDER = ['name', 'species', 'breed', 'age', 'ageMonths', 'sex', 'size', 'adoptionFee', 'description'];
 
 export default function EditAnimalForm({ id }) {
   const { data: animal, error, loading, reload } = useResource(
@@ -73,6 +74,14 @@ function toValues(animal) {
     otherSpecies: known ? '' : animal.species,
     breed: animal.breed,
     age: animal.age == null ? '' : String(animal.age),
+    ageMonths: animal.ageMonths ? String(animal.ageMonths) : '',
+    sex: animal.sex || 'Unknown',
+    size: animal.size || '',
+    description: animal.description || '',
+    goodWithKids: yesNoToForm(animal.goodWithKids),
+    goodWithDogs: yesNoToForm(animal.goodWithDogs),
+    goodWithCats: yesNoToForm(animal.goodWithCats),
+    adoptionFee: animal.adoptionFee ? String(animal.adoptionFee) : '',
   };
 }
 
@@ -209,32 +218,15 @@ function EditForm({ animal }) {
           )}
         </div>
 
-        <div className="field">
-          <label htmlFor="animal-breed">Breed</label>
-          <input
-            {...fieldProps('breed')}
-            type="text"
-            maxLength={TEXT_LIMITS.breed}
-            value={values.breed}
-            onChange={set('breed')}
-          />
-          <FieldError name="breed" errors={errors} />
-        </div>
+        <BreedField
+          values={values}
+          set={set}
+          errors={errors}
+          fieldProps={fieldProps}
+          species={values.species === OTHER_SPECIES ? values.otherSpecies.trim() : values.species}
+        />
 
-        <div className="field">
-          <label htmlFor="animal-age">Age (years)</label>
-          <input
-            {...fieldProps('age')}
-            type="text"
-            inputMode="numeric"
-            autoComplete="off"
-            maxLength={3}
-            placeholder="0 for under a year"
-            value={values.age}
-            onChange={set('age')}
-          />
-          <FieldError name="age" errors={errors} />
-        </div>
+        <AnimalDetailsFields values={values} set={set} errors={errors} fieldProps={fieldProps} />
 
         <div className="actions">
           <button type="submit" className="btn btn-primary" disabled={submitting}>
@@ -246,14 +238,5 @@ function EditForm({ animal }) {
         </div>
       </form>
     </div>
-  );
-}
-
-function FieldError({ name, errors }) {
-  if (!errors[name]) return null;
-  return (
-    <span className="field-error" id={`animal-${name}-error`}>
-      {errors[name]}
-    </span>
   );
 }

@@ -35,3 +35,8 @@ export const SPECIES = ['Dog', 'Cat', 'Rabbit', 'Bird', 'Other'];
 // Case-insensitive so "available" from the server still works.
 export const canApply = (animal) =>
   canonicalAnimalStatus(animal?.status) === ANIMAL_STATUS.AVAILABLE;
+
+// v2: medical record types (proposal R-10) and appointment purposes (R-11,
+// the same list the server accepts).
+export const RECORD_TYPES = ['Vaccination', 'Check-up', 'Treatment', 'Medication', 'Surgery', 'Other'];
+export const APPOINTMENT_PURPOSES = ['Vet visit', 'Vaccination', 'Meet and greet', 'Grooming', 'Other'];

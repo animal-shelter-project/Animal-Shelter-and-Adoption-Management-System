@@ -13,7 +13,7 @@ const add = (age) =>
   request(app)
     .post("/api/animals")
     .set("Authorization", staff())
-    .send({ name: "Rocky", species: "Dog", breed: "Boxer", age });
+    .send({ name: `Rocky ${age}`, species: "Dog", breed: "Boxer", age });
 const edit = (age) =>
   request(app)
     .put(`/api/animals/${ids.animalIds.Buddy}`)

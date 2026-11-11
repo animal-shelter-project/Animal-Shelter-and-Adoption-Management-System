@@ -9,10 +9,12 @@ beforeEach(() => {
 
 const adopter = () => `Bearer ${tokenFor(ids.adopterId, "Adopter")}`;
 const staff = () => `Bearer ${tokenFor(ids.staffId, "Staff")}`;
+// v2: the structured questions every application answers.
+const ANSWERS = { homeType: "House", ownOrRent: "Own", hasYard: true, adults: 2, children: 0, hoursAlone: 4, otherPets: "" };
 const apply = (body, auth = adopter()) => {
   const req = request(app).post("/api/applications");
   if (auth) req.set("Authorization", auth);
-  return req.send(body);
+  return req.send(body && typeof body === "object" && !Array.isArray(body) ? { ...ANSWERS, ...body } : body);
 };
 const countApplications = () => db.prepare("SELECT COUNT(*) AS n FROM applications").get().n;
 const animalStatus = async (id) => (await request(app).get(`/api/animals/${id}`)).body.status;

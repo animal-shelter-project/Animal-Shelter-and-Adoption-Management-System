@@ -9,6 +9,11 @@ import StaffAnimalForm from '../pages/StaffAnimalForm.jsx';
 import { jsonResponse, renderAt } from '../test/helpers.jsx';
 
 // Proposal R-01 / US-01: staff add a new animal.
+// Details the form sends when they're left at their defaults (v2).
+const DEFAULT_DETAILS = {
+  ageMonths: 0, adoptionFee: 0, description: '', sex: 'Unknown', size: '',
+  goodWithKids: null, goodWithDogs: null, goodWithCats: null,
+};
 const ROCKY = { id: 9, name: 'Rocky', species: 'Dog', breed: 'Boxer', age: 2, status: 'Available' };
 
 // Fake server: POST /api/animals answers with `postReply`; GET /api/animals/9 returns Rocky.
@@ -55,7 +60,7 @@ describe('Add animal form (proposal R-01 / US-01)', () => {
     expect(screen.getByTestId('location')).toHaveTextContent('/animals/9');
     const [, init] = fetchSpy.mock.calls.find(([, i]) => i?.method === 'POST');
     expect(JSON.parse(init.body)).toEqual({
-      name: 'Rocky', species: 'Dog', breed: 'Boxer', age: 2, status: 'Available',
+      name: 'Rocky', species: 'Dog', breed: 'Boxer', age: 2, status: 'Available', ...DEFAULT_DETAILS,
     });
     expect(new Headers(init.headers).get('Authorization')).toBe('Bearer staff-token');
   });
@@ -72,7 +77,7 @@ describe('Add animal form (proposal R-01 / US-01)', () => {
     expect(screen.getByText('Age is required.')).toBeInTheDocument();
     expect(screen.getByLabelText('Name')).toHaveAttribute('aria-invalid', 'true');
     expect(screen.getByLabelText('Name')).toHaveFocus();
-    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(fetchSpy.mock.calls.filter(([, i]) => i?.method === 'POST')).toHaveLength(0);
   });
 
   it('T-ADD-UI-3: negative or decimal ages are rejected before sending', async () => {
@@ -87,7 +92,7 @@ describe('Add animal form (proposal R-01 / US-01)', () => {
     await userEvent.type(screen.getByLabelText('Age (years)'), '2.5');
     await submit();
     expect(screen.getByText('Age must be a whole number of years, 0 or more.')).toBeInTheDocument();
-    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(fetchSpy.mock.calls.filter(([, i]) => i?.method === 'POST')).toHaveLength(0);
   });
 
   it('T-ADD-UI-4: field errors from the server are shown next to the fields', async () => {
@@ -111,7 +116,7 @@ describe('Add animal form (proposal R-01 / US-01)', () => {
     await fill({ name: 'Rocky', breed: 'Abyssinian', age: 1, species: 'Other' });
     await submit();
     expect(screen.getByText('Type the species.')).toBeInTheDocument();
-    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(fetchSpy.mock.calls.filter(([, i]) => i?.method === 'POST')).toHaveLength(0);
 
     await userEvent.type(screen.getByLabelText('Which species?'), 'Guinea Pig');
     await submit();
@@ -158,7 +163,7 @@ describe('Add animal form (proposal R-01 / US-01)', () => {
   it('T-ADD-UI-8: validation rules match the server (status defaults to Available)', () => {
     const ok = validateAnimalForm({ name: '  Mochi ', species: 'Cat', breed: 'Ragdoll  Mix', age: ' 4 ' });
     expect(ok.fields).toEqual({});
-    expect(ok.clean).toEqual({ name: 'Mochi', species: 'Cat', breed: 'Ragdoll Mix', age: 4, status: 'Available' });
+    expect(ok.clean).toEqual({ name: 'Mochi', species: 'Cat', breed: 'Ragdoll Mix', age: 4, status: 'Available', ...DEFAULT_DETAILS });
     expect(validateAnimalForm({ name: 'A', species: 'Dog', breed: 'B', age: '41' }).fields.age).toBe(
       'Age must be 40 or less.',
     );

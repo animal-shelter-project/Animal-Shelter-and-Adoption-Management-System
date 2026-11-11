@@ -13,7 +13,7 @@ describe("POST /api/auth/login (US-05)", () => {
   test("T-LOGIN-1: valid staff login returns a token and the user", async () => {
     const res = await login({ email: "staff@shelter.test", password: PASSWORD });
     expect(res.status).toBe(200);
-    expect(res.body.user).toEqual({ id: ids.staffId, email: "staff@shelter.test", role: "Staff" });
+    expect(res.body.user).toEqual({ id: ids.staffId, email: "staff@shelter.test", role: "Staff", name: "", phone: "", address: "" });
     const payload = jwt.verify(res.body.token, process.env.JWT_SECRET);
     expect(payload).toEqual(expect.objectContaining({ id: ids.staffId, role: "Staff" }));
     expect(payload.exp - payload.iat).toBe(2 * 60 * 60); // 2 hours

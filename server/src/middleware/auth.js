@@ -27,6 +27,10 @@ function requireAuth(req, res, next) {
   if (!user) {
     return res.status(401).json({ error: "This account no longer exists. Please log in again." });
   }
+  // The password was changed since this token was issued.
+  if ((payload.tv ?? 0) !== (user.token_version ?? 0)) {
+    return res.status(401).json({ error: "Your password was changed. Please log in again." });
+  }
 
   req.user = user;
   return next();
@@ -45,4 +49,21 @@ function requireRole(...roles) {
   };
 }
 
-module.exports = { requireAuth, requireRole };
+// For public routes that show more to staff (e.g. archived animals): sets
+// req.user when a valid token is sent, and otherwise carries on as a visitor.
+function optionalAuth(req, res, next) {
+  const header = req.get("Authorization") || "";
+  const [scheme, token] = header.split(" ");
+  if (scheme === "Bearer" && token) {
+    try {
+      const payload = AuthService.verifyToken(token);
+      const user = User.findById(payload.id);
+      if (user && (payload.tv ?? 0) === (user.token_version ?? 0)) req.user = user;
+    } catch {
+      // expired or invalid: treat as a visitor
+    }
+  }
+  return next();
+}
+
+module.exports = { requireAuth, requireRole, optionalAuth };

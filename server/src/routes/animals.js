@@ -1,43 +1,30 @@
 const express = require("express");
 const AnimalController = require("../controllers/AnimalController");
-const { requireAuth, requireRole } = require("../middleware/auth");
+const { requireAuth, requireRole, optionalAuth } = require("../middleware/auth");
 const MedicalRecordController = require('../controllers/MedicalRecordController');
+const AppointmentController = require("../controllers/AppointmentController");
 
 const router = express.Router();
+const staff = [requireAuth, requireRole("Staff")];
 
-// Public read routes.
-router.get("/", AnimalController.list);
-router.get("/:id", AnimalController.getById);
+// Public read routes (staff also see archived animals).
+router.get("/", optionalAuth, AnimalController.list);
+router.get("/breeds", AnimalController.breeds);
+router.get("/:id", optionalAuth, AnimalController.getById);
 
-// Only authenticated Staff users may create or update animals.
-router.post(
-  "/",
-  requireAuth,
-  requireRole("Staff"),
-  AnimalController.create,
-);
+// Only authenticated Staff users may create, update or archive animals.
+router.post("/", ...staff, AnimalController.create);
+router.put("/:id", ...staff, AnimalController.update);
+router.delete("/:id", ...staff, AnimalController.archive);
+router.post("/:id/restore", ...staff, AnimalController.restore);
 
-router.put(
-  "/:id",
-  requireAuth,
-  requireRole("Staff"),
-  AnimalController.update,
-);
+// Photos.
+router.put("/:id/photo", ...staff, AnimalController.uploadPhoto);
+router.delete("/:id/photo", ...staff, AnimalController.deletePhoto);
 
 // Proposal R-09 / R-12: status history and staff status changes.
-router.get(
-  "/:id/history",
-  requireAuth,
-  requireRole("Staff"),
-  AnimalController.history,
-);
-
-router.patch(
-  "/:id/status",
-  requireAuth,
-  requireRole("Staff"),
-  AnimalController.changeStatus,
-);
+router.get("/:id/history", ...staff, AnimalController.history);
+router.patch("/:id/status", ...staff, AnimalController.changeStatus);
 
 // Staff can view an animal's medical records.
 router.get(
@@ -54,5 +41,9 @@ router.post(
   requireRole('Staff'),
   MedicalRecordController.createForAnimal
 );
+
+// Proposal R-11: appointments for an animal (Staff only).
+router.get("/:id/appointments", ...staff, AppointmentController.listForAnimal);
+router.post("/:id/appointments", ...staff, AppointmentController.create);
 
 module.exports = router;

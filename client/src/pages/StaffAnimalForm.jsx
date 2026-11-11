@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api.js';
-import { OTHER_SPECIES, TEXT_LIMITS, validateAnimalForm } from '../animalForm.js';
+import { EMPTY_DETAILS, OTHER_SPECIES, TEXT_LIMITS, validateAnimalForm } from '../animalForm.js';
+import AnimalDetailsFields, { BreedField, FieldError } from '../components/AnimalDetailsFields.jsx';
 import AnimalPhoto from '../components/AnimalPhoto.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import { SPECIES, STATUSES } from '../constants.js';
@@ -23,9 +24,20 @@ import EditAnimalForm from './EditAnimalForm.jsx';
 //  - A live preview shows the card adopters will see.
 //  - Can't double-submit. On success: the new animal's profile, with a
 //    confirmation and a link to add another.
-//  - /staff/animals/:id/edit is in EditAnimalForm.jsx.); it shows a clear note.
-const EMPTY = { name: '', species: 'Dog', otherSpecies: '', breed: '', age: '', status: 'Available' };
-const FIELD_ORDER = ['name', 'species', 'breed', 'age', 'status'];
+//  - v2: age in years and months, sex, size, good with, fee, description,
+//    breed suggestions, and a warning before adding a duplicate (same name
+//    and species), with "Add anyway".
+//  - /staff/animals/:id/edit is in EditAnimalForm.jsx.
+const EMPTY = {
+  name: '',
+  species: 'Dog',
+  otherSpecies: '',
+  breed: '',
+  age: '',
+  status: 'Available',
+  ...EMPTY_DETAILS,
+};
+const FIELD_ORDER = ['name', 'species', 'breed', 'age', 'ageMonths', 'sex', 'size', 'adoptionFee', 'description', 'status'];
 
 export default function StaffAnimalForm() {
   const { id } = useParams();
@@ -40,10 +52,13 @@ function AddAnimalForm() {
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  // { id, name, breed, status } of a same-named animal the server found.
+  const [duplicate, setDuplicate] = useState(null);
 
   const set = (key) => (e) => {
     const value = e.target.value;
     setValues((v) => ({ ...v, [key]: value }));
+    if (key === 'name' || key === 'species' || key === 'otherSpecies') setDuplicate(null);
     // Clear a field's error as soon as it is edited, and the summary once
     // every field error is gone.
     const field = key === 'otherSpecies' ? 'species' : key;
@@ -64,8 +79,7 @@ function AddAnimalForm() {
     if (target) document.getElementById(`animal-${target}`)?.focus();
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const save = async (allowDuplicate = false) => {
     if (submitting) return;
     const { fields, clean } = validateAnimalForm(values);
     if (Object.keys(fields).length) {
@@ -75,19 +89,26 @@ function AddAnimalForm() {
     setSubmitting(true);
     setFormError('');
     try {
-      const animal = await api.createAnimal(clean);
+      const animal = await api.createAnimal(allowDuplicate ? { ...clean, allowDuplicate: true } : clean);
       navigate(`/animals/${encodeURIComponent(animal.id)}`, {
         state: { added: { name: animal.name, status: animal.status } },
       });
     } catch (err) {
       setSubmitting(false);
       const fields = err.body?.fields;
-      if (err.status === 400 && fields && typeof fields === 'object') {
+      if (err.status === 409 && err.body?.duplicate) {
+        setDuplicate(err.body.duplicate);
+      } else if (err.status === 400 && fields && typeof fields === 'object') {
         showErrors(fields, err.message || 'Please fix the highlighted fields.');
       } else {
         setFormError(err.message || 'Could not add the animal. Please try again.');
       }
     }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    save(false);
   };
 
   const fieldProps = (key) => ({
@@ -106,9 +127,15 @@ function AddAnimalForm() {
     species: previewSpecies || 'Other',
     breed: values.breed.trim(),
     age: /^\d+$/.test(values.age.trim()) ? Number(values.age) : null,
+    ageMonths: /^\d+$/.test(values.age.trim())
+      ? /^\d+$/.test(values.ageMonths.trim()) ? Number(values.ageMonths) : 0
+      : null,
+    sex: values.sex === 'Unknown' ? '' : values.sex,
     status: values.status,
   };
-  const previewDetails = [preview.breed, formatAge(preview.age)].filter(Boolean).join(', ');
+  const previewDetails = [preview.breed, formatAge(preview.age, preview.ageMonths), preview.sex]
+    .filter(Boolean)
+    .join(', ');
 
   return (
     <div className="page">
@@ -123,6 +150,21 @@ function AddAnimalForm() {
             {formError && (
               <div className="notice error" role="alert">
                 {formError}
+              </div>
+            )}
+            {duplicate && (
+              <div className="notice notice-warning" role="alert" data-testid="duplicate-warning">
+                <p>
+                  There’s already a {previewSpecies.toLowerCase() || 'animal'} named{' '}
+                  <b>{duplicate.name}</b>
+                  {duplicate.breed ? ` (${duplicate.breed})` : ''} in the shelter.{' '}
+                  <Link to={`/animals/${encodeURIComponent(duplicate.id)}`}>View {duplicate.name}</Link>
+                </p>
+                <div className="actions">
+                  <button type="button" className="btn" onClick={() => save(true)} disabled={submitting}>
+                    It’s a different animal: add anyway
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -169,45 +211,26 @@ function AddAnimalForm() {
             )}
           </div>
 
-          <div className="field">
-            <label htmlFor="animal-breed">Breed</label>
-            <input
-              {...fieldProps('breed')}
-              type="text"
-              placeholder="e.g. Labrador Retriever, or Mixed"
-              maxLength={TEXT_LIMITS.breed}
-              value={values.breed}
-              onChange={set('breed')}
-            />
-            <FieldError name="breed" errors={errors} />
-          </div>
+          <BreedField
+            values={values}
+            set={set}
+            errors={errors}
+            fieldProps={fieldProps}
+            species={previewSpecies}
+          />
 
-          <div className="field-row">
-            <div className="field">
-              <label htmlFor="animal-age">Age (years)</label>
-              <input
-                {...fieldProps('age')}
-                type="text"
-                inputMode="numeric"
-                autoComplete="off"
-                maxLength={3}
-                placeholder="0 for under a year"
-                value={values.age}
-                onChange={set('age')}
-              />
-              <FieldError name="age" errors={errors} />
-            </div>
-            <div className="field">
-              <label htmlFor="animal-status">Status</label>
-              <select {...fieldProps('status')} value={values.status} onChange={set('status')}>
-                {STATUSES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-              <FieldError name="status" errors={errors} />
-            </div>
+          <AnimalDetailsFields values={values} set={set} errors={errors} fieldProps={fieldProps} />
+
+          <div className="field">
+            <label htmlFor="animal-status">Status</label>
+            <select {...fieldProps('status')} value={values.status} onChange={set('status')}>
+              {STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+            <FieldError name="status" errors={errors} />
           </div>
 
           <div className="actions">
@@ -240,14 +263,5 @@ function AddAnimalForm() {
         </aside>
       </div>
     </div>
-  );
-}
-
-function FieldError({ name, errors }) {
-  if (!errors[name]) return null;
-  return (
-    <span className="field-error" id={`animal-${name}-error`}>
-      {errors[name]}
-    </span>
   );
 }

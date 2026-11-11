@@ -1,7 +1,13 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api.js';
-import { MAX_DETAILS, validateApplicationForm } from '../applicationForm.js';
+import {
+  EMPTY_APPLICATION,
+  HOME_TYPES,
+  MAX_DETAILS,
+  MAX_OTHER_PETS,
+  validateApplicationForm,
+} from '../applicationForm.js';
 import StatusBadge from '../components/StatusBadge.jsx';
 import { useDocumentTitle, useResource } from '../hooks.js';
 
@@ -16,7 +22,10 @@ import { useDocumentTitle, useResource } from '../hooks.js';
 //    shown next to the field and nothing is sent until the form is valid.
 //    The server's field errors are shown the same way.
 //  - Can't double-submit. On success: My applications, with a confirmation.
-const EMPTY = { householdDetails: '' };
+//  - v2: structured questions (home, own/rent, landlord, yard, people,
+//    other pets, hours alone) so staff can compare applicants quickly.
+const EMPTY = EMPTY_APPLICATION;
+const FIELD_ORDER = ['homeType', 'ownOrRent', 'landlordOk', 'hasYard', 'adults', 'children', 'hoursAlone', 'otherPets', 'householdDetails'];
 
 export default function ApplicationForm() {
   const { id } = useParams();
@@ -48,7 +57,8 @@ export default function ApplicationForm() {
   const showErrors = (fields, message) => {
     setErrors(fields);
     setFormError(message);
-    document.getElementById('application-householdDetails')?.focus();
+    const first = FIELD_ORDER.find((f) => fields[f]);
+    if (first) document.getElementById(`application-${first}`)?.focus();
   };
 
   const handleSubmit = async (e) => {
@@ -62,7 +72,7 @@ export default function ApplicationForm() {
     setSubmitting(true);
     setFormError('');
     try {
-      await api.submitApplication(animal.id, clean.householdDetails);
+      await api.submitApplication(animal.id, clean.householdDetails, clean.answers);
       navigate('/my-applications', { state: { applied: { animalName: animal.name } } });
     } catch (err) {
       setSubmitting(false);
@@ -148,13 +158,98 @@ export default function ApplicationForm() {
           )}
         </div>
 
+        <fieldset className="field good-with">
+          <legend>Your home</legend>
+          <div className="field-row">
+            <div className="field">
+              <label htmlFor="application-homeType">Type of home</label>
+              <select {...fieldProps('homeType')} value={values.homeType} onChange={set('homeType')}>
+                <option value="">Choose…</option>
+                {HOME_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+              <FieldError name="homeType" errors={errors} />
+            </div>
+            <div className="field">
+              <label htmlFor="application-ownOrRent">Own or rent?</label>
+              <select {...fieldProps('ownOrRent')} value={values.ownOrRent} onChange={set('ownOrRent')}>
+                <option value="">Choose…</option>
+                <option value="Own">Own</option>
+                <option value="Rent">Rent</option>
+              </select>
+              <FieldError name="ownOrRent" errors={errors} />
+            </div>
+            {values.ownOrRent === 'Rent' && (
+              <div className="field">
+                <label htmlFor="application-landlordOk">Landlord allows pets?</label>
+                <select {...fieldProps('landlordOk')} value={values.landlordOk} onChange={set('landlordOk')}>
+                  <option value="">Choose…</option>
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
+                </select>
+                <FieldError name="landlordOk" errors={errors} />
+              </div>
+            )}
+            <div className="field">
+              <label htmlFor="application-hasYard">Fenced yard?</label>
+              <select {...fieldProps('hasYard')} value={values.hasYard} onChange={set('hasYard')}>
+                <option value="">Choose…</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </select>
+              <FieldError name="hasYard" errors={errors} />
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset className="field good-with">
+          <legend>Your household</legend>
+          <div className="field-row">
+            {[
+              ['adults', 'Adults', '1 or more'],
+              ['children', 'Children', '0 if none'],
+              ['hoursAlone', 'Hours alone on a typical day', '0 to 24'],
+            ].map(([key, label, placeholder]) => (
+              <div className="field" key={key}>
+                <label htmlFor={`application-${key}`}>{label}</label>
+                <input
+                  {...fieldProps(key)}
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  maxLength={2}
+                  placeholder={placeholder}
+                  value={values[key]}
+                  onChange={set(key)}
+                />
+                <FieldError name={key} errors={errors} />
+              </div>
+            ))}
+          </div>
+          <div className="field">
+            <label htmlFor="application-otherPets">Other pets (optional)</label>
+            <input
+              {...fieldProps('otherPets')}
+              type="text"
+              maxLength={MAX_OTHER_PETS}
+              placeholder="e.g. One older cat, very calm"
+              value={values.otherPets}
+              onChange={set('otherPets')}
+            />
+            <FieldError name="otherPets" errors={errors} />
+          </div>
+        </fieldset>
+
         <div className="field">
-          <label htmlFor="application-householdDetails">About your household</label>
+          <label htmlFor="application-householdDetails">Anything else we should know?</label>
           <textarea
             {...fieldProps('householdDetails')}
             rows={6}
             maxLength={MAX_DETAILS}
-            placeholder="Who lives with you, your home and yard, and any other pets."
+            placeholder="Your experience with pets, your daily routine, why this animal…"
             value={values.householdDetails}
             onChange={set('householdDetails')}
           />

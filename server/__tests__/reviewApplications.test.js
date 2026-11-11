@@ -85,13 +85,13 @@ describe("Staff review applications (proposal R-06, R-07)", () => {
     expect(res.body.map((a) => a.id)).not.toContain(applicationFor("Daisy")); // Approved
   });
 
-  test("T-REVIEW-7: the list is staff only and supports only status=Pending", async () => {
+  test("T-REVIEW-7: the list is staff only, and an unknown status filter is a 400", async () => {
     expect((await request(app).get("/api/applications")).status).toBe(401);
     expect(
       (await request(app).get("/api/applications").set("Authorization", adopter())).status,
     ).toBe(403);
     expect(
-      (await request(app).get("/api/applications?status=Approved").set("Authorization", staff())).status,
+      (await request(app).get("/api/applications?status=bogus").set("Authorization", staff())).status,
     ).toBe(400);
   });
 
@@ -107,7 +107,11 @@ describe("Staff review applications (proposal R-06, R-07)", () => {
     const apply = await request(app)
       .post("/api/applications")
       .set("Authorization", adopter())
-      .send({ animalId: ids.animalIds.Luna, householdDetails: "Two adults, a yard." });
+      .send({
+        animalId: ids.animalIds.Luna,
+        householdDetails: "Two adults, a yard.",
+        homeType: "House", ownOrRent: "Own", hasYard: true, adults: 2, children: 0, hoursAlone: 4,
+      });
     expect(apply.status).toBe(201);
     expect(await animalStatus("Luna")).toBe("Pending");
 

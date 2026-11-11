@@ -42,6 +42,7 @@ const APP_STATUS_ALIASES = {
   approved: 'Approved',
   rejected: 'Rejected',
   withdrawn: 'Withdrawn',
+  returned: 'Returned',
 };
 
 export function canonicalApplicationStatus(value) {
@@ -118,9 +119,21 @@ export function normalizeAnimal(raw) {
     ageMonths: raw.ageMonths ?? null,
     status: canonicalAnimalStatus(raw.status),
     description: cleanText(raw.description),
+    goodWithKids: yesNo(raw.goodWithKids ?? raw.good_with_kids),
+    goodWithDogs: yesNo(raw.goodWithDogs ?? raw.good_with_dogs),
+    goodWithCats: yesNo(raw.goodWithCats ?? raw.good_with_cats),
+    adoptionFee: raw.adoptionFee ?? raw.adoption_fee ?? null,
+    archived: Boolean(raw.archived),
     intakeDate: raw.intakeDate ?? raw.intake_date ?? null,
     photoUrl: safeImageUrl(raw.photoUrl ?? raw.photo_url ?? raw.imageUrl ?? raw.image),
   };
+}
+
+// true / false / null (not known), from booleans, 1/0 or "yes"/"no".
+function yesNo(value) {
+  if (value === true || value === 1 || squash(value) === 'yes' || squash(value) === 'true') return true;
+  if (value === false || value === 0 || squash(value) === 'no' || squash(value) === 'false') return false;
+  return null;
 }
 
 export function normalizeAnimals(data) {
@@ -135,6 +148,8 @@ export function normalizeUser(raw) {
     name: cleanText(raw.name ?? raw.fullName ?? raw.username),
     email: cleanText(raw.email),
     role: canonicalRole(raw.role),
+    phone: cleanText(raw.phone),
+    address: cleanText(raw.address),
   };
 }
 
@@ -148,6 +163,13 @@ export function normalizeApplication(raw) {
     id: pickId({ id: raw.id ?? raw._id }),
     animalId,
     animalName: cleanText(raw.animalName ?? raw.animal_name ?? animalRef?.name),
+    applicantName: cleanText(raw.applicantName),
+    applicantPhone: cleanText(raw.applicantPhone),
+    applicantEmail: cleanText(raw.applicantEmail),
+    answers: raw.answers && typeof raw.answers === 'object' ? raw.answers : null,
+    staffNotes: cleanText(raw.staffNotes),
+    decidedAt: raw.decidedAt ?? null,
+    decidedBy: cleanText(raw.decidedBy) || null,
     status: canonicalApplicationStatus(raw.status),
     submittedAt: raw.submittedAt ?? raw.submitted_at ?? raw.createdAt ?? raw.created_at ?? null,
   };
@@ -179,8 +201,9 @@ export function normalizeApplications(data) {
 // The server filters (that's what the sequence diagram shows). We apply the
 // same rules again on the client so the list is still correct if a filter is
 // missing or behaves differently on the server (e.g. exact vs partial breed).
-export function matchesFilters(animal, { species, breed, status, age } = {}) {
+export function matchesFilters(animal, { species, breed, name, status, age } = {}) {
   if (species && squash(animal.species) !== squash(species)) return false;
+  if (name && !animal.name.toLowerCase().includes(String(name).trim().toLowerCase())) return false;
   if (breed && !animal.breed.toLowerCase().includes(String(breed).trim().toLowerCase())) return false;
   if (status && animal.status !== canonicalAnimalStatus(status)) return false;
   if (age) {

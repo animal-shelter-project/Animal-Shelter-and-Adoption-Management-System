@@ -113,3 +113,11 @@ describe("General API behaviour", () => {
     expect(res.headers["access-control-allow-origin"]).toBeDefined();
   });
 });
+
+describe("Security headers (v2)", () => {
+  test("T-SEC-1: every response says nosniff and can't be framed", async () => {
+    const res = await request(app).get("/api/animals");
+    expect(res.headers["x-content-type-options"]).toBe("nosniff");
+    expect(res.headers["x-frame-options"]).toBe("DENY");
+  });
+});

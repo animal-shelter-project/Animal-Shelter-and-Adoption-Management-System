@@ -1,22 +1,34 @@
 // Display formatting shared by cards, profile and tables.
 
-// age can be a number of years (3, 0.5), a numeric string ("3"), or free
-// text ("8 weeks"). ageMonths, if present, wins for animals under a year.
+// age is whole years (3) and ageMonths the extra months, 0-11, on top
+// (age 1 + ageMonths 6 = a year and a half). Older data may send only
+// ageMonths as the total (no age), a fraction of a year (0.5), a numeric
+// string ("3") or free text ("8 weeks"); all are understood.
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
+// Total age in whole months, or null when unknown / free text.
+function totalMonths(age, ageMonths) {
+  const months = ageMonths == null || ageMonths === '' ? null : Number(ageMonths);
+  if (age == null || age === '') {
+    return months == null || Number.isNaN(months) ? null : Math.max(0, Math.round(months));
+  }
+  const years = typeof age === 'number' ? age : Number(age);
+  if (Number.isNaN(years) || years < 0) return null;
+  const extra = months != null && !Number.isNaN(months) && months < 12 ? Math.max(0, months) : 0;
+  return Math.round(years * 12) + Math.round(extra);
+}
+
 export function formatAge(age, ageMonths) {
-  if (ageMonths != null && ageMonths !== '' && Number(ageMonths) < 12) {
-    const m = Math.max(0, Math.round(Number(ageMonths)));
-    return m <= 0 ? 'Under 1 month' : m === 1 ? '1 month' : `${m} months`;
+  const total = totalMonths(age, ageMonths);
+  if (total == null) {
+    const text = age == null ? '' : String(age).trim();
+    return text && Number.isNaN(Number(text)) ? text : null;
   }
-  if (age == null || age === '') return null;
-  const n = typeof age === 'number' ? age : Number(age);
-  if (Number.isNaN(n)) return String(age).trim() || null;
-  if (n < 0) return null;
-  if (n < 1) {
-    const m = Math.round(n * 12);
-    return m <= 0 ? 'Under 1 month' : m === 1 ? '1 month' : `${m} months`;
-  }
-  const y = Math.floor(n);
-  return y === 1 ? '1 year' : `${y} years`;
+  if (total < 1) return 'Under 1 month';
+  if (total < 12) return plural(total, 'month');
+  const years = Math.floor(total / 12);
+  const months = total % 12;
+  return months ? `${plural(years, 'year')}, ${plural(months, 'month')}` : plural(years, 'year');
 }
 
 // Age filter groups (proposal R-03 / US-03). Ranges are in years:
@@ -30,11 +42,9 @@ export const AGE_GROUPS = [
 // Age in years as a number (for the age filter), or null if unknown.
 // Understands 3, 0.5, "3", "8 weeks", "6 months", "2 years" and ageMonths.
 export function ageInYears(age, ageMonths) {
-  if (ageMonths != null && ageMonths !== '' && !Number.isNaN(Number(ageMonths))) {
-    return Number(ageMonths) / 12;
-  }
+  const total = totalMonths(age, ageMonths);
+  if (total != null) return total / 12;
   if (age == null || age === '') return null;
-  if (typeof age === 'number') return age >= 0 ? age : null;
   const m = /^\s*(\d+(?:\.\d+)?)\s*(weeks?|wks?|months?|mos?|years?|yrs?)?\s*$/i.exec(String(age));
   if (!m) return null;
   const n = Number(m[1]);
@@ -44,11 +54,23 @@ export function ageInYears(age, ageMonths) {
   return n;
 }
 
+// Whole dollars: 0 -> "No fee", 150 -> "$150".
+export function formatFee(fee) {
+  if (fee == null || fee === '') return null;
+  const n = Number(fee);
+  if (Number.isNaN(n) || n < 0) return null;
+  return n === 0 ? 'No fee' : `$${n.toLocaleString('en-US')}`;
+}
+
 // SQLite's CURRENT_TIMESTAMP looks like "2026-10-12 15:00:00" and is UTC.
 // Some browsers (Safari) can't parse that form, so convert it to ISO first.
 export function parseDate(value) {
   if (!value) return null;
   const s = String(value);
+  // A plain date ("2026-11-10", e.g. a medical record) is a calendar day,
+  // not midnight UTC, so it must not shift to the day before.
+  const day = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (day) return new Date(Number(day[1]), Number(day[2]) - 1, Number(day[3]));
   const iso = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}(:\d{2})?$/.test(s) ? `${s.replace(' ', 'T')}Z` : s;
   const d = new Date(iso);
   return Number.isNaN(d.getTime()) ? null : d;
@@ -59,4 +81,13 @@ export function formatDate(value) {
   const d = parseDate(value) || new Date(NaN);
   if (Number.isNaN(d.getTime())) return String(value);
   return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+// Appointment times are the shelter's local time, "2026-11-20 14:30".
+// -> "Fri, Nov 20, 2:30 PM"
+export function formatWhen(stamp) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/.exec(String(stamp || ''));
+  if (!m) return stamp || '';
+  const d = new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]);
+  return d.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 }

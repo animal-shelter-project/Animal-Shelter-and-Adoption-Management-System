@@ -4,6 +4,7 @@
 //   JWT_SECRET      signing key for login tokens (REQUIRED in production)
 //   JWT_EXPIRES_IN  token lifetime (default "2h", as in the plan)
 //   CLIENT_ORIGIN   allowed browser origin for CORS (default: any)
+//   UPLOAD_DIR      folder for animal photos (default server/uploads)
 
 const path = require("path");
 
@@ -26,6 +27,7 @@ module.exports = {
   JWT_SECRET: process.env.JWT_SECRET || DEV_SECRET,
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || "2h",
   CLIENT_ORIGIN: process.env.CLIENT_ORIGIN || null,
+  UPLOAD_DIR: process.env.UPLOAD_DIR || path.join(__dirname, "..", "uploads"),
   ANIMAL_STATUSES: ["Available", "Pending", "Adopted", "Fostered"],
   ROLES: ["Staff", "Adopter"],
 };

@@ -52,7 +52,11 @@ describe('Edit animal page (proposal R-01, BUG-05)', () => {
 
     expect(await screen.findByText('Saved changes to Buddy.')).toBeInTheDocument();
     const body = JSON.parse(putCalls(spy)[0][1].body);
-    expect(body).toEqual({ name: 'Buddy', species: 'Dog', breed: 'Labrador Retriever', age: 4 });
+    expect(body).toEqual({
+      name: 'Buddy', species: 'Dog', breed: 'Labrador Retriever', age: 4,
+      ageMonths: 0, adoptionFee: 0, description: '', sex: 'Unknown', size: '',
+      goodWithKids: null, goodWithDogs: null, goodWithCats: null,
+    });
     expect(body).not.toHaveProperty('status');
   });
 

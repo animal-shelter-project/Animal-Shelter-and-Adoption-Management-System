@@ -5,6 +5,11 @@ import ScrollToTop from './components/ScrollToTop.jsx';
 import RequireRole from './auth/RequireRole.jsx';
 import AnimalList from './pages/AnimalList.jsx';
 import AnimalProfile from './pages/AnimalProfile.jsx';
+import Account from './pages/Account.jsx';
+import Notifications from './pages/Notifications.jsx';
+import Register from './pages/Register.jsx';
+import StaffAccounts from './pages/StaffAccounts.jsx';
+import StaffDashboard from './pages/StaffDashboard.jsx';
 import Login from './pages/Login.jsx';
 import MyApplications from './pages/MyApplications.jsx';
 import NotFound from './pages/NotFound.jsx';
@@ -30,6 +35,40 @@ export default function App() {
             <Route path="/animals" element={<AnimalList />} />
             <Route path="/animals/:id" element={<AnimalProfile />} />
             <Route path="/login" element={<Login />} />
+            {/* v2: accounts */}
+            <Route path="/register" element={<Register />} />
+            <Route
+              path="/account"
+              element={
+                <RequireRole>
+                  <Account />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/notifications"
+              element={
+                <RequireRole>
+                  <Notifications />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/staff/dashboard"
+              element={
+                <RequireRole role="Staff">
+                  <StaffDashboard />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/staff/accounts"
+              element={
+                <RequireRole role="Staff">
+                  <StaffAccounts />
+                </RequireRole>
+              }
+            />
             <Route
               path="/my-applications"
               element={

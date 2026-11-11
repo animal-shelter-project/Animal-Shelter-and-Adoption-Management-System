@@ -37,7 +37,9 @@ describe("Status history (proposal R-09)", () => {
   test("T-HIST-API-2: Available -> Fostered -> Available -> Adopted is recorded in order", async () => {
     const id = ids.animalIds.Buddy;
     for (const status of ["Fostered", "Available", "Adopted"]) {
-      const res = await patch(id, { status, note: `to ${status}` });
+      // v2: Adopted by hand needs the adopter's account.
+      const adopterId = status === "Adopted" ? ids.adopterId : undefined;
+      const res = await patch(id, { status, note: `to ${status}`, adopterId });
       expect(res.status).toBe(200);
       expect(res.body.status).toBe(status);
     }

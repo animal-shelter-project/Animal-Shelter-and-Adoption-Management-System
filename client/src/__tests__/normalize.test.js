@@ -74,7 +74,10 @@ describe('normalize (server-shape independence)', () => {
 describe('formatAge', () => {
   it('T-F-1: years, months and free text', () => {
     expect(formatAge(1)).toBe('1 year');
-    expect(formatAge(3.7)).toBe('3 years');
+    expect(formatAge(3.7)).toBe('3 years, 8 months');
+    expect(formatAge(1, 6)).toBe('1 year, 6 months');
+    expect(formatAge(0, 4)).toBe('4 months');
+    expect(formatAge(3, 0)).toBe('3 years');
     expect(formatAge(0.5)).toBe('6 months');
     expect(formatAge('2')).toBe('2 years');
     expect(formatAge('8 weeks')).toBe('8 weeks');

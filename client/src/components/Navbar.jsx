@@ -1,5 +1,6 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth.js';
+import NotificationsLink from './NotificationsLink.jsx';
 
 export default function Navbar() {
   const { user, isLoggedIn, isStaff, isAdopter, logout } = useAuth();
@@ -30,23 +31,31 @@ export default function Navbar() {
             Animals
           </NavLink>
           {isAdopter && <NavLink to="/my-applications">My applications</NavLink>}
+          {isAdopter && <NotificationsLink userId={user?.id} />}
+          {isStaff && <NavLink to="/staff/dashboard">Dashboard</NavLink>}
           {isStaff && <NavLink to="/staff/applications">Review applications</NavLink>}
           {isStaff && <NavLink to="/staff/animals/new">Add animal</NavLink>}
+          {isStaff && <NavLink to="/staff/accounts">Accounts</NavLink>}
         </nav>
         <div className="nav-user">
           {isLoggedIn ? (
             <>
-              <span className="small nav-name" title={user?.email}>
+              <Link to="/account" className="small nav-name" title={`${user?.email}: my account`}>
                 {user?.name || user?.email} <span className="role">{user?.role}</span>
-              </span>
+              </Link>
               <button type="button" className="btn btn-ghost" onClick={handleLogout}>
                 Logout
               </button>
             </>
           ) : (
-            <Link to="/login" className="btn btn-ghost">
-              Login
-            </Link>
+            <>
+              <Link to="/register" className="nav-signup">
+                Sign up
+              </Link>
+              <Link to="/login" className="btn btn-ghost">
+                Login
+              </Link>
+            </>
           )}
         </div>
       </div>
