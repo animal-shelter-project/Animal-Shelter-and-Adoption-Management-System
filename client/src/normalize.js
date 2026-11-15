@@ -193,6 +193,23 @@ export function normalizeHistory(data) {
   return unwrapList(data, 'history').map(normalizeHistoryEntry).filter((h) => h?.toStatus);
 }
 
+export function normalizeMedicalRecord(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  return {
+    ...raw,
+    id: pickId({ id: raw.id ?? raw._id}),
+    animalId: pickId({ id: raw.animalId ?? raw.animal_id}),
+    recordDate: cleanText(raw.recordDate ?? raw.record_date),
+    recordType: cleanText(raw.recordType ?? raw.record_type),
+    notes: cleanText(raw.notes),
+    createdAt: raw.createdAt ?? raw.created_at ?? null,
+  };
+}
+
+export function normalizeMedicalRecords(data) {
+  return unwrapList(data, 'medicalRecords', 'records').map(normalizeMedicalRecord).filter((record) => record?.id);
+}
+
 export function normalizeApplications(data) {
   return unwrapList(data, 'applications').map(normalizeApplication).filter(Boolean);
 }

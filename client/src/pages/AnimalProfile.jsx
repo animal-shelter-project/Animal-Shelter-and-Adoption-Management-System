@@ -5,6 +5,7 @@ import AnimalPhoto from '../components/AnimalPhoto.jsx';
 import AppointmentsPanel from '../components/AppointmentsPanel.jsx';
 import MedicalRecordsPanel from '../components/MedicalRecordsPanel.jsx';
 import StaffAnimalTools from '../components/StaffAnimalTools.jsx';
+import StaffMedicalRecordsPanel from '../components/StaffMedicalRecordsPanel.jsx';
 import StaffStatusPanel from '../components/StaffStatusPanel.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import { canApply } from '../constants.js';
@@ -191,7 +192,9 @@ export default function AnimalProfile() {
       </article>
       {isStaff && <StaffAnimalTools animal={animal} onChanged={refresh} />}
       {isStaff && !animal.archived && <StaffStatusPanel animal={animal} onChanged={refresh} />}
-      {isStaff && <MedicalRecordsPanel animal={animal} />}
+      {/* {isStaff && <MedicalRecordsPanel animal={animal} />} */}
+      {/*isStaff && !animal.archived && <AppointmentsPanel animal={animal} />*/}
+      {isStaff && <StaffMedicalRecordsPanel animal={animal} />}
       {isStaff && !animal.archived && <AppointmentsPanel animal={animal} />}
     </div>
   );

@@ -8,6 +8,8 @@ import {
   normalizeAnimals,
   normalizeApplications,
   normalizeHistory,
+  normalizeMedicalRecord,
+  normalizeMedicalRecords,
   normalizeUser,
   unwrapOne,
 } from './normalize.js';
@@ -341,6 +343,36 @@ export const api = {
   // Staff only (proposal R-09). Oldest first.
   getAnimalHistory: async (id, opts) =>
     normalizeHistory(await request(`/animals/${encodeURIComponent(id)}/history`, opts)),
+
+  // Staff only (proposal R-10 / US-10)
+  listMedicalRecords: async (animalId, opts) =>
+    normalizeMedicalRecords(
+      await request(
+        `/animals/${encodeURIComponent(animalId)}/medical-records`,
+        opts,
+      ),
+    ),
+
+  createMedicalRecord: async (animalId, record, opts) => {
+    const data = await request(
+      `/animals/${encodeURIComponent(animalId)}/medical-records`,
+      {
+        ...opts,
+        method: 'POST',
+        body: record,
+      },
+    );
+    
+    const created = normalizeMedicalRecord(
+      data?.medicalRecord ?? data?.record ?? data,
+    );
+
+    if (!created?.id) {
+      throw new ApiError(500, 'Unexpected response from server');
+    }
+
+    return created;
+  },
 
   // Staff only (proposal R-09 / R-12). Returns the updated animal.
   // v2: changing to Adopted by hand needs adopterId (the adopter's account).
