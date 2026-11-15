@@ -3,7 +3,6 @@ import { api } from '../api.js';
 import { useAuth } from '../auth/useAuth.js';
 import AnimalPhoto from '../components/AnimalPhoto.jsx';
 import AppointmentsPanel from '../components/AppointmentsPanel.jsx';
-import MedicalRecordsPanel from '../components/MedicalRecordsPanel.jsx';
 import StaffAnimalTools from '../components/StaffAnimalTools.jsx';
 import StaffMedicalRecordsPanel from '../components/StaffMedicalRecordsPanel.jsx';
 import StaffStatusPanel from '../components/StaffStatusPanel.jsx';
