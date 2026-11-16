@@ -9,14 +9,15 @@ A web app for an animal shelter.
 - **Public:** browse the animals that are Available; search by name; filter by species, age group, breed and status; sort; open each animal's profile (photo, age, sex, size, good with children/dogs/cats, adoption fee, description).
 - **Adopters:**
   - sign up, log in and edit their contact details
+  - add a profile picture (everyone, staff too)
   - change their password
-  - apply for an animal (structured questions about their home and household)
+  - apply for an animal (structured questions about their home and household, plus up to 3 optional photos of their home)
   - follow and withdraw their applications
   - get messages when staff decide
 - **Staff:**
   - **Dashboard:** animals by status, applications waiting, adoptions this month, upcoming appointments, the animals waiting longest
   - **Animals:** add, edit, upload photos, archive and restore
-  - **Applications:** review with the applicant's contact details and answers; approve or reject; keep private notes; see past decisions
+  - **Applications:** review with the applicant's picture, contact details, answers and home photos; approve or reject; keep private notes; see past decisions
   - **Status:** change an animal's status, with a full history of who changed it, when and why. A walk-in adoption needs the adopter's account. A return is recorded on the adoption.
   - **Care:** medical records (add, correct and delete) and appointments (overlapping bookings are refused)
   - **Accounts:** look up adopters and reset a forgotten password
@@ -117,7 +118,7 @@ The site aims for WCAG 2.2 level AA:
 - Changing a password logs out the user's other sessions.
 - After 5 wrong passwords, that email is locked for 15 minutes.
 - Role checks run on every protected API route.
-- Photos are checked by their bytes (JPEG, PNG or WebP, 2 MB maximum).
+- Photos (animal photos, profile pictures and home photos) are checked by their bytes (JPEG, PNG or WebP, 2 MB maximum) and saved with random file names.
 - The login token is kept in the browser's localStorage. On a public deployment, consider moving it to an httpOnly cookie.
 
 ## Known limitations

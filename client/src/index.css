@@ -995,3 +995,39 @@ a.stat-accent:hover { color: #fff; }
   .badge, .btn, .chip, .card, .notice { border: 1px solid CanvasText; }
   :focus-visible { outline: 3px solid Highlight; }
 }
+
+/* ---------- Profile pictures and home photos ---------- */
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--teal);
+  color: #fff;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 0.85rem;
+  line-height: 1;
+  vertical-align: middle;
+}
+.avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.avatar-tiny { width: 1.4rem; height: 1.4rem; font-size: 0.62rem; margin-right: 0.2rem; }
+.avatar-large { width: 6rem; height: 6rem; font-size: 2rem; box-shadow: var(--shadow); }
+.utility-bar .avatar { background: var(--orange); color: var(--black); }
+.photo-row { display: flex; gap: 1.25rem; align-items: flex-start; flex-wrap: wrap; }
+.photo-row > div { flex: 1 1 14rem; min-width: 0; }
+.applicant-who { display: flex; align-items: center; gap: 0.5rem; }
+.home-photos { border: 0; padding: 0; margin: 0 0 1.25rem; min-width: 0; }
+.home-photos legend { font-weight: 600; padding: 0; margin-bottom: 0.25rem; }
+.photo-thumbs { list-style: none; padding: 0; margin: 0.5rem 0 0.75rem; display: flex; flex-wrap: wrap; gap: 0.75rem; }
+.photo-thumbs li { display: flex; flex-direction: column; gap: 0.35rem; align-items: flex-start; }
+.photo-thumbs img { width: 7.5rem; height: 5.5rem; object-fit: cover; border-radius: var(--radius-sm); border: var(--line); display: block; }
+.photo-thumbs .thumb-name { font-size: 0.8rem; max-width: 7.5rem; overflow-wrap: anywhere; color: var(--muted, #4b5563); }
+.photo-thumbs-small { margin: 0.5rem 0 0; gap: 0.4rem; }
+.photo-thumbs-small img { width: 4.5rem; height: 3.4rem; }
+.photo-thumbs-small a { display: block; border-radius: var(--radius-sm); }
+.home-photos > .btn { justify-self: start; align-self: flex-start; width: auto; }

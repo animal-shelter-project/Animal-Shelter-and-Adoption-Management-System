@@ -4,12 +4,14 @@ const Notification = require("../models/Notification");
 const HttpError = require("../utils/HttpError");
 const { changeStatus } = require("../services/AnimalStatusService");
 const { parseId, optionalText } = require("../utils/validation");
+const { readImage, newFileName, writeImage, removeImage } = require("../utils/images");
 
 const MAX_HOUSEHOLD_DETAILS = 1000;
 const MAX_OTHER_PETS = 300;
 const MAX_NOTES = 1000;
 const HOME_TYPES = ["House", "Apartment", "Condo", "Mobile home", "Other"];
 const OWN_OR_RENT = ["Own", "Rent"];
+const MAX_HOME_PHOTOS = 3;
 
 const fieldError = (field, message) => new HttpError(400, message, { fields: { [field]: message } });
 
@@ -58,14 +60,30 @@ function readAnswers(body) {
   return answers;
 }
 
+// Optional photos of the adopter's home: up to 3 data: URLs. All are checked
+// before anything is saved.
+function readHomePhotos(value) {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value)) throw fieldError("homePhotos", "Home photos must be a list of pictures.");
+  if (value.length > MAX_HOME_PHOTOS) {
+    throw fieldError("homePhotos", `Add up to ${MAX_HOME_PHOTOS} photos of your home.`);
+  }
+  return value.map((image) => {
+    const { bytes, ext } = readImage(image, "homePhotos");
+    return { bytes, fileName: newFileName("home", ext) };
+  });
+}
+
 // US-05: one transaction. changeStatus throws 404 (no such animal) or 409
 // (animal isn't Available, R-08), so no application row is saved in those cases.
-const submit = db.transaction((animalId, applicantId, householdDetails, answers) => {
+const submit = db.transaction((animalId, applicantId, householdDetails, answers, photos = []) => {
   changeStatus(animalId, "Pending", {
     changedBy: applicantId,
     note: "Adoption application submitted",
   });
-  return AdoptionApplication.create({ animalId, applicantId, householdDetails, answers });
+  const application = AdoptionApplication.create({ animalId, applicantId, householdDetails, answers });
+  if (photos.length) AdoptionApplication.addPhotos(application.id, photos.map((p) => p.fileName));
+  return application;
 });
 
 // US-06 / US-07: approve or reject, in one transaction. The application and
@@ -124,7 +142,8 @@ class ApplicationController {
 
   // POST /api/applications   (Adopter only)
   // body: { animalId, householdDetails, homeType, ownOrRent, landlordOk?,
-  //         hasYard, adults, children, otherPets?, hoursAlone }
+  //         hasYard, adults, children, otherPets?, hoursAlone,
+  //         homePhotos?: up to 3 data: URLs }
   // 201 with the new application; 400 bad input; 404 no such animal;
   // 409 animal is not Available.
   static submitApplication(req, res) {
@@ -147,10 +166,20 @@ class ApplicationController {
       });
     }
     const answers = readAnswers(body);
+    const photos = readHomePhotos(body.homePhotos);
 
-    // The applicant always comes from the login token, never from the body.
-    const application = submit(animalId, req.user.id, details, answers);
-    res.status(201).json(AdoptionApplication.forApplicant(application));
+    // The photo files are written first; if the application is then refused
+    // (e.g. 409, the animal is no longer Available) they are removed again.
+    photos.forEach((p) => writeImage(p.fileName, p.bytes));
+    let application;
+    try {
+      // The applicant always comes from the login token, never from the body.
+      application = submit(animalId, req.user.id, details, answers, photos);
+    } catch (err) {
+      photos.forEach((p) => removeImage(p.fileName));
+      throw err;
+    }
+    res.status(201).json(AdoptionApplication.forApplicant(AdoptionApplication.findById(application.id)));
   }
 
   // GET /api/applications?status=Pending|Approved|Rejected|Withdrawn|Returned|decided|all

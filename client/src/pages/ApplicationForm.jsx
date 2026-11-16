@@ -8,7 +8,9 @@ import {
   MAX_OTHER_PETS,
   validateApplicationForm,
 } from '../applicationForm.js';
+import HomePhotosField from '../components/HomePhotosField.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
+import { photoToDataUrl } from '../photo.js';
 import { useDocumentTitle, useResource } from '../hooks.js';
 
 // Proposal R-05 / US-05: an adopter applies for an Available animal
@@ -24,8 +26,10 @@ import { useDocumentTitle, useResource } from '../hooks.js';
 //  - Can't double-submit. On success: My applications, with a confirmation.
 //  - v2: structured questions (home, own/rent, landlord, yard, people,
 //    other pets, hours alone) so staff can compare applicants quickly.
+//  - Optional: up to 3 photos of the home, shrunk in the browser and sent
+//    with the application.
 const EMPTY = EMPTY_APPLICATION;
-const FIELD_ORDER = ['homeType', 'ownOrRent', 'landlordOk', 'hasYard', 'adults', 'children', 'hoursAlone', 'otherPets', 'householdDetails'];
+const FIELD_ORDER = ['homeType', 'ownOrRent', 'landlordOk', 'hasYard', 'adults', 'children', 'hoursAlone', 'otherPets', 'householdDetails', 'homePhotos'];
 
 export default function ApplicationForm() {
   const { id } = useParams();
@@ -40,6 +44,7 @@ export default function ApplicationForm() {
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [photos, setPhotos] = useState([]);
 
   const set = (key) => (e) => {
     const value = e.target.value;
@@ -72,7 +77,16 @@ export default function ApplicationForm() {
     setSubmitting(true);
     setFormError('');
     try {
-      await api.submitApplication(animal.id, clean.householdDetails, clean.answers);
+      let homePhotos;
+      try {
+        homePhotos = await Promise.all(photos.map((p) => photoToDataUrl(p.file, { maxSide: 1600 })));
+      } catch (photoErr) {
+        setSubmitting(false);
+        showErrors({ homePhotos: photoErr.message }, 'Please fix the highlighted fields.');
+        return;
+      }
+      const answers = homePhotos.length ? { ...clean.answers, homePhotos } : clean.answers;
+      await api.submitApplication(animal.id, clean.householdDetails, answers);
       navigate('/my-applications', { state: { applied: { animalName: animal.name } } });
     } catch (err) {
       setSubmitting(false);
@@ -258,6 +272,17 @@ export default function ApplicationForm() {
             {values.householdDetails.length}/{MAX_DETAILS}
           </span>
         </div>
+
+        <HomePhotosField
+          photos={photos}
+          error={errors.homePhotos}
+          onChange={(next, problem) => {
+            setPhotos(next);
+            const rest = { ...errors };
+            delete rest.homePhotos;
+            setErrors(problem ? { ...rest, homePhotos: problem } : rest);
+          }}
+        />
 
         <div className="actions">
           <button type="submit" className="btn btn-primary" disabled={submitting}>

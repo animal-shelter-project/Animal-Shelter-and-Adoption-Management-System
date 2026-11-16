@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth.js';
 import { MAIN_MENU, MEGA_MENU, SHELTER } from '../siteContent.js';
+import Avatar from './Avatar.jsx';
 import Icon from './Icon.jsx';
 import NotificationsLink from './NotificationsLink.jsx';
 
@@ -108,7 +109,8 @@ export default function Navbar() {
             {isLoggedIn ? (
               <>
                 <Link to="/account" className="nav-name" title={`${user?.email}: my account`}>
-                  <Icon name="user" /> {user?.name || user?.email} <span className="role">{user?.role}</span>
+                  <Avatar name={user?.name} email={user?.email} photoUrl={user?.photoUrl} size="tiny" /> {user?.name || user?.email}{' '}
+                  <span className="role">{user?.role}</span>
                 </Link>
                 <button type="button" className="utility-button" onClick={handleLogout}>
                   Logout

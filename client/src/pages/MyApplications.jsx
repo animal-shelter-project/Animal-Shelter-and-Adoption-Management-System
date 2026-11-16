@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { api } from '../api.js';
+import HomePhotoLinks from '../components/HomePhotoLinks.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import { formatDate, parseDate } from '../format.js';
 import { useDocumentTitle, useResource } from '../hooks.js';
@@ -116,6 +117,7 @@ export default function MyApplications() {
                     ) : (
                       app.animalName || '—'
                     )}
+                    <HomePhotoLinks photos={app.homePhotos} who="you" />
                   </td>
                   <td>{formatDate(app.submittedAt)}</td>
                   <td>

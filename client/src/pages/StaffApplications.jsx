@@ -1,6 +1,8 @@
 import { Fragment, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api.js';
+import Avatar from '../components/Avatar.jsx';
+import HomePhotoLinks from '../components/HomePhotoLinks.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import { answersSummary } from '../applicationForm.js';
 import { formatDate } from '../format.js';
@@ -22,6 +24,7 @@ import { useDocumentTitle, useResource } from '../hooks.js';
 //  - v2: the applicant's name and phone, their answers to the structured
 //    questions, private staff notes, and a "Decided" tab with past decisions
 //    (who decided and when).
+//  - The applicant's profile picture and any photos of their home.
 
 export default function StaffApplications() {
   useDocumentTitle('Review applications');
@@ -163,7 +166,10 @@ export default function StaffApplications() {
                       </Link>
                     </td>
                     <td>
-                      {app.applicantName && <b className="applicant-name">{app.applicantName}</b>}
+                      <span className="applicant-who">
+                        <Avatar name={app.applicantName} email={app.applicantEmail} photoUrl={app.applicantPhotoUrl} />
+                        {app.applicantName && <b className="applicant-name">{app.applicantName}</b>}
+                      </span>
                       <span className="applicant-line">{app.applicantEmail || '—'}</span>
                       {app.applicantPhone && (
                         <a className="applicant-line" href={`tel:${app.applicantPhone.replace(/[^\d+]/g, '')}`}>
@@ -175,6 +181,7 @@ export default function StaffApplications() {
                     <td>
                       {answersSummary(app.answers) && <span className="answers">{answersSummary(app.answers)}</span>}
                       <span>{app.householdDetails || '—'}</span>
+                      <HomePhotoLinks photos={app.homePhotos} who={app.applicantName || app.applicantEmail || 'the applicant'} />
                       {app.staffNotes && notesOpen !== app.id && (
                         <span className="staff-note">
                           <b>Staff notes:</b> {app.staffNotes}

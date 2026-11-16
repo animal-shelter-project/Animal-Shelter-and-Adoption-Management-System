@@ -131,6 +131,15 @@ db.exec(`
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
 
+  -- Photos of their home that an adopter adds to an application (up to 3).
+  -- file is the name in the uploads folder.
+  CREATE TABLE IF NOT EXISTS application_photos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    application_id INTEGER NOT NULL REFERENCES applications(id) ON DELETE CASCADE,
+    file TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+
   CREATE INDEX IF NOT EXISTS idx_applications_applicant ON applications(applicant_id);
   CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, id);
   CREATE INDEX IF NOT EXISTS idx_status_history_animal ON status_history(animal_id, id);
@@ -140,6 +149,7 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_appointments_time ON appointments(starts_at);
   CREATE INDEX IF NOT EXISTS idx_inquiries_kind ON inquiries(kind, status, id);
   CREATE INDEX IF NOT EXISTS idx_pledges_item ON pledges(item_id);
+  CREATE INDEX IF NOT EXISTS idx_application_photos_app ON application_photos(application_id, id);
 `);
 
 // Columns added after the first release. CREATE TABLE IF NOT EXISTS doesn't
@@ -192,6 +202,8 @@ addMissingColumns("users", [
   ["address", "TEXT NOT NULL DEFAULT ''"],
   // Bumped when the password changes: older login tokens stop working.
   ["token_version", "INTEGER NOT NULL DEFAULT 0"],
+  // Profile picture: file name in the uploads folder, or NULL for initials.
+  ["photo", "TEXT"],
 ]);
 
 addMissingColumns("animals", [

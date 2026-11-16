@@ -1,4 +1,5 @@
 const db = require("../db");
+const { imageUrl } = require("../utils/images");
 
 // An application with its animal and applicant (for staff and for the
 // applicant's own view).
@@ -14,6 +15,7 @@ const WITH_DETAILS = `
     u.name AS applicantName,
     u.phone AS applicantPhone,
     u.address AS applicantAddress,
+    u.photo AS applicantPhoto,
     ap.household_details AS householdDetails,
     ap.home_type, ap.own_or_rent, ap.landlord_ok, ap.has_yard,
     ap.adults, ap.children, ap.other_pets, ap.hours_alone,
@@ -34,9 +36,11 @@ const fromBool = (v) => (v === null || v === undefined ? null : v ? 1 : 0);
 // Row -> API shape: the structured answers are grouped under `answers`.
 function toApplication(row) {
   if (!row) return row;
-  const { home_type, own_or_rent, landlord_ok, has_yard, adults, children, other_pets, hours_alone, ...rest } = row;
+  const { home_type, own_or_rent, landlord_ok, has_yard, adults, children, other_pets, hours_alone, applicantPhoto, ...rest } = row;
   return {
     ...rest,
+    applicantPhotoUrl: imageUrl(applicantPhoto),
+    homePhotos: [],
     answers: {
       homeType: home_type,
       ownOrRent: own_or_rent,
@@ -48,6 +52,22 @@ function toApplication(row) {
       hoursAlone: hours_alone,
     },
   };
+}
+
+// Adds each application's home photos: [{ id, url }], oldest first.
+function withPhotos(applications) {
+  const list = applications.filter(Boolean);
+  if (list.length === 0) return applications;
+  const ids = list.map((a) => a.id);
+  const rows = db
+    .prepare(
+      `SELECT id, application_id AS applicationId, file FROM application_photos
+        WHERE application_id IN (${ids.map(() => "?").join(", ")}) ORDER BY id`,
+    )
+    .all(...ids);
+  const byApp = new Map(list.map((a) => [a.id, a]));
+  for (const r of rows) byApp.get(r.applicationId).homePhotos.push({ id: r.id, url: imageUrl(r.file) });
+  return applications;
 }
 
 // Applicants never see staff notes or who decided.
@@ -70,16 +90,18 @@ const STATUS_FILTERS = {
 class AdoptionApplication {
   // The adopter's "My applications" page: newest first.
   static findByApplicant(applicantId) {
-    return db
+    const list = db
       .prepare(`${WITH_DETAILS} WHERE ap.applicant_id = ? ORDER BY ap.created_at DESC, ap.id DESC`)
       .all(applicantId)
       .map(toApplication)
       .map(forApplicant);
+    return withPhotos(list);
   }
 
   // Returns undefined when there is no such application.
   static findById(id) {
-    return toApplication(db.prepare(`${WITH_DETAILS} WHERE ap.id = ?`).get(id));
+    const application = toApplication(db.prepare(`${WITH_DETAILS} WHERE ap.id = ?`).get(id));
+    return application ? withPhotos([application])[0] : application;
   }
 
   // Staff lists. Pending: oldest first (first come, first served).
@@ -91,10 +113,12 @@ class AdoptionApplication {
       filter === "pending"
         ? "ap.created_at ASC, ap.id ASC"
         : "COALESCE(ap.decided_at, ap.created_at) DESC, ap.id DESC";
-    return db
-      .prepare(`${WITH_DETAILS} WHERE ap.status IN (${placeholders}) ORDER BY ${order}`)
-      .all(...statuses)
-      .map(toApplication);
+    return withPhotos(
+      db
+        .prepare(`${WITH_DETAILS} WHERE ap.status IN (${placeholders}) ORDER BY ${order}`)
+        .all(...statuses)
+        .map(toApplication),
+    );
   }
 
   // Kept for the v1 name used in the controller and tests.
@@ -150,6 +174,12 @@ class AdoptionApplication {
     db.prepare(
       "UPDATE applications SET status = ?, decided_at = CURRENT_TIMESTAMP, decided_by = COALESCE(?, decided_by) WHERE id = ?",
     ).run(status, decidedBy, id);
+  }
+
+  // Home photos (file names already saved in the uploads folder).
+  static addPhotos(id, files) {
+    const insert = db.prepare("INSERT INTO application_photos (application_id, file) VALUES (?, ?)");
+    for (const file of files) insert.run(id, file);
   }
 
   static setNotes(id, notes) {
