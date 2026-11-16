@@ -40,8 +40,24 @@ function findByAnimalId(animalId) {
   `).all(animalId);
 }
 
+function update(id, { recordDate, recordType, notes }) {
+  db.prepare(`
+    UPDATE medical_records
+    SET record_date = ?, record_type = ?, notes = ?
+    WHERE id = ?
+  `).run(recordDate, recordType, notes, id);
+
+  return findById(id);
+}
+
+function remove(id) {
+  return db.prepare('DELETE FROM medical_records WHERE id = ?').run(id).changes > 0;
+}
+
 module.exports = {
   create,
   findById,
-  findByAnimalId
-};
+  findByAnimalId,
+  update,
+  remove
+};

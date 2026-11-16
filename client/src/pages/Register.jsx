@@ -66,7 +66,7 @@ export default function Register() {
       setSubmitting(false);
       const fields = err.body?.fields;
       if (fields && typeof fields === 'object') show(fields, err.message);
-      else setFormError(err.message || 'Could not create the account. Please try again.');
+      else setFormError(err.message || 'We couldn’t create the account. Please try again.');
     }
   };
 

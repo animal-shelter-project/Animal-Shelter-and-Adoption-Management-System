@@ -83,6 +83,16 @@ describe("Staff dashboard (v2)", () => {
     expect(res.body.longestWaiting[0].name).toBe("Buddy");
     expect((await request(app).get("/api/dashboard").set("Authorization", adopter())).status).toBe(403);
   });
+
+  test("T-STATS-1: the public home-page numbers are counts only and need no login", async () => {
+    const maxApp = db.prepare("SELECT id FROM applications WHERE animal_id = ?").get(ids.animalIds.Max).id;
+    const approved = await request(app).put(`/api/applications/${maxApp}/approve`).set("Authorization", staff());
+    expect(approved.status).toBe(200);
+
+    const res = await request(app).get("/api/stats");
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ available: 4, inFoster: 1, adopted: 2, adoptionsThisYear: 1 });
+  });
 });
 
 describe("Backups (v2)", () => {

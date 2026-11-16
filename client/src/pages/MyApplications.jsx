@@ -43,7 +43,7 @@ export default function MyApplications() {
       await api.withdrawApplication(app.id);
       setMessage({ kind: 'success', text: `Your application for ${app.animalName} was withdrawn.` });
     } catch (err) {
-      setMessage({ kind: 'error', text: err.message || 'Could not withdraw the application.' });
+      setMessage({ kind: 'error', text: err.message || 'We couldn’t withdraw the application. Please try again.' });
     } finally {
       setBusyId(null);
       refresh();
@@ -143,4 +143,4 @@ export default function MyApplications() {
       )}
     </div>
   );
-}
+}

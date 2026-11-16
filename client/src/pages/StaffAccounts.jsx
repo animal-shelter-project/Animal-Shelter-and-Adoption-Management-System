@@ -28,7 +28,7 @@ export default function StaffAccounts() {
     try {
       setReset(await api.resetPassword(user.id));
     } catch (err) {
-      setResetError(err.message || 'Could not reset the password.');
+      setResetError(err.message || 'We couldn’t reset the password. Please try again.');
     } finally {
       setBusyId(null);
     }

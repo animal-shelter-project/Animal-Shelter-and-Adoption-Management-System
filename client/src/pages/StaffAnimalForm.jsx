@@ -101,7 +101,7 @@ function AddAnimalForm() {
       } else if (err.status === 400 && fields && typeof fields === 'object') {
         showErrors(fields, err.message || 'Please fix the highlighted fields.');
       } else {
-        setFormError(err.message || 'Could not add the animal. Please try again.');
+        setFormError(err.message || 'We couldn’t add the animal. Please try again.');
       }
     }
   };

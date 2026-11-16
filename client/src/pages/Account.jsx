@@ -66,7 +66,7 @@ function ProfileForm() {
       setMessage({ kind: 'success', text: 'Your details were saved.' });
     } catch (err) {
       if (err.body?.fields) setErrors(err.body.fields);
-      setMessage({ kind: 'error', text: err.message || 'Could not save. Please try again.' });
+      setMessage({ kind: 'error', text: err.message || 'We couldn’t save. Please try again.' });
     } finally {
       setSaving(false);
     }
@@ -132,7 +132,7 @@ function PasswordForm() {
         current: server.currentPassword,
         next: server.newPassword,
       });
-      setMessage({ kind: 'error', text: err.message || 'Could not change the password.' });
+      setMessage({ kind: 'error', text: err.message || 'We couldn’t change the password. Please try again.' });
     } finally {
       setSaving(false);
     }

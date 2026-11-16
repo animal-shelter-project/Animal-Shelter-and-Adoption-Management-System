@@ -42,6 +42,10 @@ router.post(
   MedicalRecordController.createForAnimal
 );
 
+// Staff can correct or delete a medical record.
+router.put("/:id/medical-records/:recordId", ...staff, MedicalRecordController.updateForAnimal);
+router.delete("/:id/medical-records/:recordId", ...staff, MedicalRecordController.deleteForAnimal);
+
 // Proposal R-11: appointments for an animal (Staff only).
 router.get("/:id/appointments", ...staff, AppointmentController.listForAnimal);
 router.post("/:id/appointments", ...staff, AppointmentController.create);

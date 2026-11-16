@@ -8,7 +8,7 @@ const readAsDataUrl = (blob) =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error('Could not read that file.'));
+    reader.onerror = () => reject(new Error('We couldn’t read that file. Please choose another photo.'));
     reader.readAsDataURL(blob);
   });
 

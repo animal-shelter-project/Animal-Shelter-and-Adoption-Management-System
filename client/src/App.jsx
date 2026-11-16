@@ -1,19 +1,24 @@
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { Route, Routes, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar.jsx';
+import ScrollEffects from './components/ScrollEffects.jsx';
+import SiteFooter from './components/SiteFooter.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import ScrollToTop from './components/ScrollToTop.jsx';
 import RequireRole from './auth/RequireRole.jsx';
 import AnimalList from './pages/AnimalList.jsx';
+import Home from './pages/Home.jsx';
+import InfoPage from './pages/InfoPage.jsx';
+import { INFO_PAGES } from './siteContent.js';
 import AnimalProfile from './pages/AnimalProfile.jsx';
 import Account from './pages/Account.jsx';
 import Notifications from './pages/Notifications.jsx';
 import Register from './pages/Register.jsx';
+import StaffInbox from './pages/StaffInbox.jsx';
 import StaffAccounts from './pages/StaffAccounts.jsx';
 import StaffDashboard from './pages/StaffDashboard.jsx';
 import Login from './pages/Login.jsx';
 import MyApplications from './pages/MyApplications.jsx';
 import NotFound from './pages/NotFound.jsx';
-// Placeholders: M2 and M3 replace the contents of these files with their pages.
 import ApplicationForm from './pages/ApplicationForm.jsx';
 import StaffApplications from './pages/StaffApplications.jsx';
 import StaffAnimalForm from './pages/StaffAnimalForm.jsx';
@@ -26,11 +31,16 @@ export default function App() {
         Skip to content
       </a>
       <ScrollToTop />
+      <ScrollEffects />
       <Navbar />
       <main id="main" tabIndex={-1}>
         <ErrorBoundary resetKey={pathname}>
           <Routes>
-            <Route path="/" element={<Navigate to="/animals" replace />} />
+            <Route path="/" element={<Home />} />
+            {/* Information pages: How adoption works, FAQs, Foster, Volunteer, Donate, About, Contact */}
+            {Object.keys(INFO_PAGES).map((slug) => (
+              <Route key={slug} path={`/${slug}`} element={<InfoPage slug={slug} />} />
+            ))}
             {/* M1 */}
             <Route path="/animals" element={<AnimalList />} />
             <Route path="/animals/:id" element={<AnimalProfile />} />
@@ -58,6 +68,14 @@ export default function App() {
               element={
                 <RequireRole role="Staff">
                   <StaffDashboard />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/staff/inbox"
+              element={
+                <RequireRole role="Staff">
+                  <StaffInbox />
                 </RequireRole>
               }
             />
@@ -115,6 +133,7 @@ export default function App() {
           </Routes>
         </ErrorBoundary>
       </main>
+      <SiteFooter />
     </>
   );
 }

@@ -66,7 +66,7 @@ export default function AppointmentsPanel({ animal }) {
       {list.loading && !list.data && <p className="muted">Loading appointments…</p>}
       {list.error && (
         <div className="notice error notice-row" role="alert">
-          <span>Couldn't load appointments: {list.error.message}</span>
+          <span>We couldn’t load appointments: {list.error.message}</span>
           <button type="button" className="btn" onClick={list.reload}>
             Retry
           </button>

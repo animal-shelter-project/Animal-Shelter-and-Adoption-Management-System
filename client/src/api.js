@@ -394,6 +394,45 @@ export const api = {
   addMedicalRecord: (animalId, record, opts) =>
     request(`/animals/${encodeURIComponent(animalId)}/medical-records`, { ...opts, method: 'POST', body: record }),
 
+  // Staff: correct a record (any of recordDate, recordType, notes) or delete it.
+  updateMedicalRecord: (animalId, recordId, changes, opts) =>
+    request(`/animals/${encodeURIComponent(animalId)}/medical-records/${encodeURIComponent(recordId)}`, {
+      ...opts,
+      method: 'PUT',
+      body: changes,
+    }),
+  deleteMedicalRecord: (animalId, recordId, opts) =>
+    request(`/animals/${encodeURIComponent(animalId)}/medical-records/${encodeURIComponent(recordId)}`, {
+      ...opts,
+      method: 'DELETE',
+    }),
+
+  // Public: the shelter's headline numbers for the home page.
+  stats: (opts) => request('/stats', opts),
+
+  // Public forms: foster / volunteer sign-ups and contact messages.
+  sendInquiry: (body, opts) => request('/inquiries', { ...opts, auth: false, method: 'POST', body }),
+  // Staff inbox.
+  inquiries: ({ kind, status } = {}, opts) => {
+    const q = new URLSearchParams();
+    if (kind) q.set('kind', kind);
+    if (status) q.set('status', status);
+    const qs = q.toString();
+    return request(`/inquiries${qs ? `?${qs}` : ''}`, opts);
+  },
+  setInquiryStatus: (id, status, opts) =>
+    request(`/inquiries/${encodeURIComponent(id)}`, { ...opts, method: 'PATCH', body: { status } }),
+
+  // Wish list: public list and pledges; staff manage items.
+  wishList: (opts) => request('/wishlist', { ...opts, auth: false }),
+  pledge: (itemId, body, opts) =>
+    request(`/wishlist/${encodeURIComponent(itemId)}/pledges`, { ...opts, auth: false, method: 'POST', body }),
+  wishPledges: (opts) => request('/wishlist/pledges', opts),
+  addWishItem: (item, opts) => request('/wishlist', { ...opts, method: 'POST', body: item }),
+  updateWishItem: (id, changes, opts) =>
+    request(`/wishlist/${encodeURIComponent(id)}`, { ...opts, method: 'PUT', body: changes }),
+  deleteWishItem: (id, opts) => request(`/wishlist/${encodeURIComponent(id)}`, { ...opts, method: 'DELETE' }),
+
   // Staff: appointments (proposal R-11), soonest first.
   appointments: async (animalId, opts) => {
     const data = await request(`/animals/${encodeURIComponent(animalId)}/appointments`, opts);
@@ -436,4 +475,4 @@ export const api = {
     });
     return normalizeApplications([data])[0];
   },
-};
+};
