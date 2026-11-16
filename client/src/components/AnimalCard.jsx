@@ -11,6 +11,7 @@ export default function AnimalCard({ animal }) {
     <Link
       to={`/animals/${encodeURIComponent(animal.id)}`}
       className={`card${animal.status === 'Available' ? '' : ' card-taken'}`}
+      data-reveal="up"
       data-testid="animal-card"
     >
       <div className="card-photo">

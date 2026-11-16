@@ -9,6 +9,7 @@ import StaffStatusPanel from '../components/StaffStatusPanel.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import { canApply } from '../constants.js';
 import { formatAge, formatDate, formatFee } from '../format.js';
+import { SHELTER } from '../siteContent.js';
 import { useDocumentTitle, useResource } from '../hooks.js';
 import { ANIMAL_STATUS } from '../normalize.js';
 
@@ -45,6 +46,8 @@ function goodWithText(animal) {
   const text = parts.join('; ');
   return text ? text[0].toUpperCase() + text.slice(1) : null;
 }
+
+const SPECIES_LINKS = { Dog: 'Dogs', Cat: 'Cats', Rabbit: 'Rabbits', Bird: 'Birds' };
 
 export default function AnimalProfile() {
   const { id } = useParams();
@@ -105,18 +108,33 @@ export default function AnimalProfile() {
     ['Sex', animal.sex && animal.sex !== 'Unknown' ? animal.sex : null],
     ['Size', animal.size],
     ['Good with', goodWithText(animal)],
-    ['Adoption fee', animal.adoptionFee != null ? formatFee(animal.adoptionFee) : null],
     ['Intake date', animal.intakeDate ? formatDate(animal.intakeDate) : null],
   ].filter(([, v]) => v);
 
   const available = canApply(animal);
   const note = STATUS_NOTE[animal.status] || '{name} is not open for new applications right now.';
 
+  const fee = animal.adoptionFee != null ? formatFee(animal.adoptionFee) : null;
+  const summary = [animal.species, formatAge(animal.age, animal.ageMonths)].filter(Boolean).join(' · ');
+  const speciesLink = SPECIES_LINKS[animal.species];
+
   return (
-    <div className="page narrow">
-      <Link to="/animals" className="back">
-        ← All animals
-      </Link>
+    <div className="page profile-page">
+      <nav className="breadcrumbs" aria-label="Breadcrumb">
+        <ol>
+          <li>
+            <Link to="/">Home</Link>
+          </li>
+          <li>
+            <Link to="/animals">All animals</Link>
+          </li>
+          {speciesLink && (
+            <li>
+              <Link to={`/animals?species=${encodeURIComponent(animal.species)}`}>{speciesLink}</Link>
+            </li>
+          )}
+        </ol>
+      </nav>
       {added && (
         <div className="notice notice-success notice-row" role="status" data-testid="added-notice">
           <span>
@@ -137,10 +155,20 @@ export default function AnimalProfile() {
         </div>
       )}
       <article className="profile">
-        <AnimalPhoto animal={animal} large />
+        <div className="profile-photo">
+          <AnimalPhoto animal={animal} large />
+        </div>
         <div className="profile-body">
           <StatusBadge status={animal.status} />
           <h1 className="profile-name">{animal.name}</h1>
+          {summary && <p className="profile-summary">{summary}</p>}
+
+          {animal.description && (
+            <section className="profile-about" aria-labelledby="about-title">
+              <h2 id="about-title">About {animal.name}</h2>
+              <p className="description">{animal.description}</p>
+            </section>
+          )}
 
           {facts.length > 0 && (
             <dl className="facts">
@@ -152,15 +180,22 @@ export default function AnimalProfile() {
               ))}
             </dl>
           )}
+        </div>
 
-          {animal.description && <p className="description">{animal.description}</p>}
-
+        <aside className="adopt-card" aria-labelledby="adopt-card-title">
+          <h2 id="adopt-card-title">{available ? `Adopt ${animal.name}` : 'Adoption status'}</h2>
+          {fee && (
+            <p className="adopt-fee">
+              <span>Adoption fee</span>
+              <strong>{fee}</strong>
+            </p>
+          )}
           <div className="actions">
             {available && !isStaff && (
               <>
                 <Link
                   to={`/animals/${encodeURIComponent(animal.id)}/apply`}
-                  className="btn btn-primary"
+                  className="btn btn-primary btn-block"
                   data-testid="apply-button"
                 >
                   <svg className="btn-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -182,17 +217,36 @@ export default function AnimalProfile() {
               </p>
             )}
             {isStaff && (
-              <Link to={`/staff/animals/${encodeURIComponent(animal.id)}/edit`} className="btn">
+              <Link to={`/staff/animals/${encodeURIComponent(animal.id)}/edit`} className="btn btn-block">
                 Edit animal
               </Link>
             )}
           </div>
-        </div>
+          {available && !isStaff && (
+            <ol className="mini-steps">
+              <li>Apply online in about 10 minutes</li>
+              <li>Our staff review your application</li>
+              <li>Meet {animal.name} and take them home</li>
+            </ol>
+          )}
+          <p className="adopt-help small">
+            Questions? Call <a href={SHELTER.phoneHref}>{SHELTER.phone}</a> or read the{' '}
+            <Link to="/adopt/faqs">adoption FAQs</Link>.
+          </p>
+        </aside>
       </article>
-      {isStaff && <StaffAnimalTools animal={animal} onChanged={refresh} />}
-      {isStaff && !animal.archived && <StaffStatusPanel animal={animal} onChanged={refresh} />}
-      {isStaff && <MedicalRecordsPanel animal={animal} />}
-      {isStaff && !animal.archived && <AppointmentsPanel animal={animal} />}
+      {isStaff && (
+        <div className="staff-grid">
+          <div className="staff-col">
+            <StaffAnimalTools animal={animal} onChanged={refresh} />
+            {!animal.archived && <StaffStatusPanel animal={animal} onChanged={refresh} />}
+          </div>
+          <div className="staff-col">
+            <MedicalRecordsPanel animal={animal} />
+            {!animal.archived && <AppointmentsPanel animal={animal} />}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

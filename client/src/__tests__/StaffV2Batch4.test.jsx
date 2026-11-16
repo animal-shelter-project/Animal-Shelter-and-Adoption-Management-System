@@ -1,4 +1,4 @@
-import { act, screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { saveAuth } from '../api.js';
@@ -44,6 +44,42 @@ describe('Staff panels (v2)', () => {
     await waitFor(() => expect(screen.getByText('Healthy weight')).toBeInTheDocument());
     const post = spy.mock.calls.find(([, i]) => i?.method === 'POST');
     expect(JSON.parse(post[1].body)).toMatchObject({ recordType: 'Check-up', notes: 'Healthy weight' });
+  });
+
+  it('T-MED-UI-2: staff correct a record and delete one entered by mistake', async () => {
+    let records = [
+      { id: 1, recordDate: '2026-10-20', recordType: 'Vaccination', notes: 'Rabies vacine' },
+      { id: 2, recordDate: '2026-10-19', recordType: 'Other', notes: 'Wrong animal' },
+    ];
+    const spy = server({
+      'GET /api/animals/1/medical-records': () => jsonResponse(200, records),
+      'PUT /api/animals/1/medical-records/1': (b) => {
+        records = records.map((r) => (r.id === 1 ? { ...r, ...b } : r));
+        return jsonResponse(200, records[0]);
+      },
+      'DELETE /api/animals/1/medical-records/2': () => {
+        records = records.filter((r) => r.id !== 2);
+        return Promise.resolve(new Response(null, { status: 204 }));
+      },
+    });
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    renderAt('/x', '/x', <MedicalRecordsPanel animal={BUDDY} />);
+
+    await userEvent.click(await screen.findByRole('button', { name: /Edit the Vaccination record/ }));
+    const form = screen.getByRole('form', { name: 'Edit the Vaccination record' });
+    const notes = within(form).getByLabelText('Notes');
+    await userEvent.clear(notes);
+    await userEvent.type(notes, 'Rabies vaccine');
+    await userEvent.click(within(form).getByRole('button', { name: 'Save changes' }));
+    expect(await screen.findByText('Record updated.')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('Rabies vaccine')).toBeInTheDocument());
+    const put = spy.mock.calls.find(([, i]) => i?.method === 'PUT');
+    expect(JSON.parse(put[1].body)).toEqual({ recordDate: '2026-10-20', recordType: 'Vaccination', notes: 'Rabies vaccine' });
+
+    await userEvent.click(screen.getByRole('button', { name: /Delete the Other record/ }));
+    expect(window.confirm).toHaveBeenCalled();
+    expect(await screen.findByText('Record deleted.')).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText('Wrong animal')).not.toBeInTheDocument());
   });
 
   it('T-APPT-UI-1: staff book an appointment; a clash shows the server’s reason', async () => {

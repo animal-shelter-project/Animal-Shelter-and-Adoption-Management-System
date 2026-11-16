@@ -5,6 +5,22 @@ const Appointment = require("../models/Appointment");
 const { localStamp } = require("./AppointmentController");
 
 class DashboardController {
+  // GET /api/stats (public): the shelter's headline numbers for the home
+  // page. Only counts, never anything about a person.
+  static publicStats(req, res) {
+    const counts = Animal.countByStatus();
+    const yearStartUtc = `${new Date().getFullYear()}-01-01 00:00:00`;
+    const adoptionsThisYear = db
+      .prepare("SELECT COUNT(*) AS n FROM applications WHERE status = 'Approved' AND decided_at >= ?")
+      .get(yearStartUtc).n;
+    res.json({
+      available: counts.Available,
+      inFoster: counts.Fostered,
+      adopted: counts.Adopted,
+      adoptionsThisYear,
+    });
+  }
+
   // GET /api/dashboard (Staff): the numbers a shelter manager asks for first.
   static summary(req, res) {
     const now = new Date();

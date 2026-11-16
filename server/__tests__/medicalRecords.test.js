@@ -15,6 +15,18 @@ const postRecord = (animalId, body, auth = staff()) => {
   return req.send(body);
 };
 
+const putRecord = (animalId, recordId, body, auth = staff()) => {
+  const req = request(app).put(`/api/animals/${animalId}/medical-records/${recordId}`);
+  if (auth) req.set("Authorization", auth);
+  return req.send(body);
+};
+
+const deleteRecord = (animalId, recordId, auth = staff()) => {
+  const req = request(app).delete(`/api/animals/${animalId}/medical-records/${recordId}`);
+  if (auth) req.set("Authorization", auth);
+  return req;
+};
+
 const getRecords = (animalId, auth = staff()) => {
   const req = request(app).get(`/api/animals/${animalId}/medical-records`);
   if (auth) req.set("Authorization", auth);
@@ -132,5 +144,74 @@ describe("Medical records (proposal R-10 / US-10)", () => {
     db.prepare("DELETE FROM animals WHERE id = ?").run(animalId);
     const row = db.prepare("SELECT id FROM medical_records WHERE id = ?").get(created.body.id);
     expect(row).toBeUndefined();
+  });
+
+  test("T-MED-API-7: staff can correct a record; fields left out keep their value", async () => {
+    const animalId = ids.animalIds.Buddy;
+    const created = await postRecord(animalId, {
+      recordDate: "2026-10-20",
+      recordType: "Vaccination",
+      notes: "Rabies vacine",
+    });
+
+    const fixed = await putRecord(animalId, created.body.id, { notes: "  Rabies vaccine, next due 2027  " });
+    expect(fixed.status).toBe(200);
+    expect(fixed.body).toEqual({
+      ...created.body,
+      notes: "Rabies vaccine, next due 2027",
+    });
+
+    const moved = await putRecord(animalId, created.body.id, { recordDate: "2026-10-18", recordType: "Check-up" });
+    expect(moved.status).toBe(200);
+    expect(moved.body).toMatchObject({ recordDate: "2026-10-18", recordType: "Check-up", notes: "Rabies vaccine, next due 2027" });
+    expect((await getRecords(animalId)).body).toEqual([moved.body]);
+  });
+
+  test("T-MED-API-8: invalid changes return 400 and leave the record unchanged", async () => {
+    const animalId = ids.animalIds.Buddy;
+    const created = await postRecord(animalId, { recordDate: "2026-10-20", recordType: "Checkup" });
+
+    for (const body of [
+      { recordDate: "2026-02-30" },
+      { recordType: "  " },
+      { notes: 7 },
+      [],
+    ]) {
+      const res = await putRecord(animalId, created.body.id, body);
+      expect(res.status).toBe(400);
+      expect(res.body.error).toEqual(expect.any(String));
+    }
+    expect((await getRecords(animalId)).body).toEqual([created.body]);
+  });
+
+  test("T-MED-API-9: staff can delete a record entered by mistake", async () => {
+    const animalId = ids.animalIds.Buddy;
+    const keep = await postRecord(animalId, { recordDate: "2026-10-19", recordType: "Checkup" });
+    const mistake = await postRecord(animalId, { recordDate: "2026-10-20", recordType: "Vaccination" });
+
+    const res = await deleteRecord(animalId, mistake.body.id);
+    expect(res.status).toBe(204);
+    expect((await getRecords(animalId)).body).toEqual([keep.body]);
+    expect((await deleteRecord(animalId, mistake.body.id)).status).toBe(404);
+  });
+
+  test("T-MED-API-10: edit and delete need Staff, the right animal and a real record", async () => {
+    const animalId = ids.animalIds.Buddy;
+    const created = await postRecord(animalId, { recordDate: "2026-10-20", recordType: "Checkup" });
+    const id = created.body.id;
+
+    expect((await putRecord(animalId, id, { notes: "x" }, null)).status).toBe(401);
+    expect((await deleteRecord(animalId, id, null)).status).toBe(401);
+    expect((await putRecord(animalId, id, { notes: "x" }, adopter())).status).toBe(403);
+    expect((await deleteRecord(animalId, id, adopter())).status).toBe(403);
+
+    // A record can only be changed through its own animal.
+    expect((await putRecord(ids.animalIds.Luna, id, { notes: "x" })).status).toBe(404);
+    expect((await deleteRecord(ids.animalIds.Luna, id)).status).toBe(404);
+    expect((await putRecord(animalId, 9999, { notes: "x" })).status).toBe(404);
+    expect((await putRecord(animalId, "abc", { notes: "x" })).status).toBe(400);
+    expect((await deleteRecord("abc", id)).status).toBe(400);
+
+    expect((await getRecords(animalId)).body).toEqual([created.body]);
   });
 });

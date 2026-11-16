@@ -14,6 +14,7 @@ const hash = bcrypt.hashSync(PASSWORD, 4); // low cost: fast tests
 function resetData() {
   require("../src/services/LoginThrottle").reset();
   db.exec(`
+    DELETE FROM pledges; DELETE FROM wish_items; DELETE FROM inquiries;
     DELETE FROM status_history; DELETE FROM applications; DELETE FROM animals; DELETE FROM users;
     DELETE FROM sqlite_sequence;
   `);

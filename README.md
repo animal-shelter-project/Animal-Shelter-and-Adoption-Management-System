@@ -4,6 +4,8 @@ CSE 5324-001, Fall 2026. Team: Ammar Baig (1001847502), Rutuja Dudhagundi (10023
 
 A web app for an animal shelter.
 
+- **Public site:** a home page (rotating banner, ways to help, the animals waiting longest, live shelter numbers), menus with dropdowns and a full-screen menu, search by name, and information pages: how adoption works, adoption FAQs, fostering, volunteering, ways to give, our story, and visit/contact.
+- **Get involved:** foster and volunteer sign-up forms (with an availability grid), a contact form, and a donation wish list where visitors promise items and watch the progress bars fill. Everything is saved to the database; no payments are taken.
 - **Public:** browse the animals that are Available; search by name; filter by species, age group, breed and status; sort; open each animal's profile (photo, age, sex, size, good with children/dogs/cats, adoption fee, description).
 - **Adopters:**
   - sign up, log in and edit their contact details
@@ -16,8 +18,9 @@ A web app for an animal shelter.
   - **Animals:** add, edit, upload photos, archive and restore
   - **Applications:** review with the applicant's contact details and answers; approve or reject; keep private notes; see past decisions
   - **Status:** change an animal's status, with a full history of who changed it, when and why. A walk-in adoption needs the adopter's account. A return is recorded on the adoption.
-  - **Care:** medical records and appointments (overlapping bookings are refused)
+  - **Care:** medical records (add, correct and delete) and appointments (overlapping bookings are refused)
   - **Accounts:** look up adopters and reset a forgotten password
+  - **Inbox:** foster and volunteer sign-ups and contact messages (mark them contacted or closed), and the wish list (change what is needed, see who promised what)
 
 ## Folder layout
 
@@ -95,6 +98,17 @@ Copy `server/.env.example` to `server/.env` to change these settings:
 - `CLIENT_ORIGIN`
 
 Copy `client/.env.example` to `client/.env` to point the client at another API (`VITE_API_URL`).
+
+## Accessibility
+
+The site aims for WCAG 2.2 level AA:
+
+- Text and background colours meet the 4.5:1 contrast ratio (3:1 for large text).
+- Colour is never the only signal. Every status has an icon and a word, and errors are written out.
+- Everything works with the keyboard. There is a "Skip to content" link, menus close with Escape, and the focus outline is always visible.
+- Form fields have labels, decorative pictures are hidden from screen readers, and messages are announced.
+- The home page banner can be paused and does not move for people who turn on "reduce motion".
+- Pages work at 200% zoom and down to 320 px wide.
 
 ## Security notes
 

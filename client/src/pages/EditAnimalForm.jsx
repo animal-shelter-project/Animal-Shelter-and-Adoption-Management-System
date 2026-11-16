@@ -137,7 +137,7 @@ function EditForm({ animal }) {
       if (err.status === 400 && fields && typeof fields === 'object') {
         showErrors(fields, err.message || 'Please fix the highlighted fields.');
       } else {
-        setFormError(err.message || 'Could not save the changes. Please try again.');
+        setFormError(err.message || 'We couldn’t save the changes. Please try again.');
       }
     } finally {
       setSubmitting(false);

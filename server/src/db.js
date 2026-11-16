@@ -98,6 +98,39 @@ db.exec(`
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
 
+  -- Foster and volunteer sign-ups and contact-form messages from the public
+  -- site. details holds the answers that depend on the kind, as JSON.
+  CREATE TABLE IF NOT EXISTS inquiries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    kind TEXT NOT NULL CHECK (kind IN ('Foster', 'Volunteer', 'Contact')),
+    name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    phone TEXT NOT NULL DEFAULT '',
+    message TEXT NOT NULL DEFAULT '',
+    details TEXT NOT NULL DEFAULT '{}',
+    status TEXT NOT NULL DEFAULT 'New' CHECK (status IN ('New', 'Contacted', 'Closed')),
+    updated_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+
+  -- The donation wish list: what the shelter needs, and what people have
+  -- promised to bring (no payments are taken on the site).
+  CREATE TABLE IF NOT EXISTS wish_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    category TEXT NOT NULL CHECK (category IN ('Dogs', 'Cats', 'Everyone')),
+    needed INTEGER NOT NULL CHECK (needed BETWEEN 0 AND 1000),
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS pledges (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    item_id INTEGER NOT NULL REFERENCES wish_items(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    quantity INTEGER NOT NULL CHECK (quantity BETWEEN 1 AND 100),
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+
   CREATE INDEX IF NOT EXISTS idx_applications_applicant ON applications(applicant_id);
   CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, id);
   CREATE INDEX IF NOT EXISTS idx_status_history_animal ON status_history(animal_id, id);
@@ -105,6 +138,8 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_medical_records_animal_date ON medical_records(animal_id, record_date DESC);
   CREATE INDEX IF NOT EXISTS idx_appointments_animal ON appointments(animal_id, starts_at);
   CREATE INDEX IF NOT EXISTS idx_appointments_time ON appointments(starts_at);
+  CREATE INDEX IF NOT EXISTS idx_inquiries_kind ON inquiries(kind, status, id);
+  CREATE INDEX IF NOT EXISTS idx_pledges_item ON pledges(item_id);
 `);
 
 // Columns added after the first release. CREATE TABLE IF NOT EXISTS doesn't

@@ -62,7 +62,7 @@ function History({ data, error, loading, reload }) {
   if (error) {
     return (
       <div className="notice error notice-row" role="alert">
-        <span>Couldn't load the history: {error.message}</span>
+        <span>We couldn’t load the history: {error.message}</span>
         <button type="button" className="btn" onClick={reload}>
           Retry
         </button>
@@ -120,7 +120,7 @@ function ChangeStatusForm({ animal, options, onStart, onChanged }) {
       setNote('');
       onChanged(updated); // the profile refreshes; the new status re-keys (resets) this form
     } catch (err) {
-      setError(err.message || 'Could not change the status.');
+      setError(err.message || 'We couldn’t change the status. Please try again.');
     } finally {
       setSaving(false);
     }

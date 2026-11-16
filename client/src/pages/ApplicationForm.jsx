@@ -81,7 +81,7 @@ export default function ApplicationForm() {
         showErrors(fields, err.message || 'Please fix the highlighted fields.');
       } else {
         // Includes 409: the animal is no longer Available.
-        setFormError(err.message || 'Could not submit the application. Please try again.');
+        setFormError(err.message || 'We couldn’t submit the application. Please try again.');
       }
     }
   };
@@ -279,4 +279,4 @@ function FieldError({ name, errors }) {
       {errors[name]}
     </span>
   );
-}
+}

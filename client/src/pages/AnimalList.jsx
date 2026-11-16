@@ -209,10 +209,10 @@ export default function AnimalList() {
     <>
       <section className="hero">
         <div className="hero-inner">
-          <h1 className="hero-title">Who’s coming home with you?</h1>
+          <h1 className="hero-title">Meet our adoptable animals</h1>
           <p className="hero-lede">
-            Every animal here is waiting for a family. Find a friend, read their story, and apply to
-            adopt.
+            Every animal here is waiting for a family. Search by name, filter by what fits your home, and open a
+            profile to read their story.
           </p>
           <div className="quick-species" role="group" aria-label="Show only">
             {QUICK_SPECIES.map(([label, value]) => {

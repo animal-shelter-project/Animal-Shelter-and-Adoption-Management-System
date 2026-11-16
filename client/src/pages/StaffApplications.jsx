@@ -49,7 +49,7 @@ export default function StaffApplications() {
           : `Rejected the application for ${app.animalName}. ${app.animalName} is Available again.`,
       );
     } catch (err) {
-      setActionError(err.message || 'Could not save the decision. Please try again.');
+      setActionError(err.message || 'We couldn’t save the decision. Please try again.');
     } finally {
       setBusyId(null);
       refresh();
@@ -70,7 +70,7 @@ export default function StaffApplications() {
       setDone(`Notes saved for ${app.applicantName || app.applicantEmail}'s application.`);
       setNotesOpen(null);
     } catch (err) {
-      setActionError(err.message || 'Could not save the notes.');
+      setActionError(err.message || 'We couldn’t save the notes. Please try again.');
     } finally {
       setBusyId(null);
       refresh();

@@ -33,7 +33,7 @@ export default function StaffDashboard() {
     return (
       <div className="page">
         <div className="notice error notice-row" role="alert">
-          <span>{error?.message || 'Could not load the dashboard.'}</span>
+          <span>{error?.message || 'We couldn’t load the dashboard. Please try again.'}</span>
           <button type="button" className="btn" onClick={reload}>
             Retry
           </button>
