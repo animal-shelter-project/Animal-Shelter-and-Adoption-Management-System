@@ -1,11 +1,8 @@
-const fs = require("fs");
-const path = require("path");
-const crypto = require("crypto");
 const Animal = require("../models/Animal");
 const HttpError = require("../utils/HttpError");
 const StatusHistory = require("../models/StatusHistory");
 const { manualChange, updateDetails } = require("../services/AnimalStatusService");
-const { UPLOAD_DIR } = require("../config");
+const { saveImage, removeImage } = require("../utils/images");
 const {
   parseId,
   optionalText,
@@ -19,7 +16,6 @@ const MAX_FEE = 10000;
 const MAX_DESCRIPTION = 1000;
 const SEXES = ["Male", "Female", "Unknown"];
 const SIZES = ["Small", "Medium", "Large"];
-const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
 
 // Require a JSON object for POST and PUT request bodies.
 function requireBody(req) {
@@ -161,23 +157,6 @@ function findVisible(id, user) {
   return animal;
 }
 
-// Accepted photo types, recognised by their first bytes (not by what the
-// browser claims), so only real images are ever saved.
-const IMAGE_TYPES = [
-  { ext: "jpg", mime: "image/jpeg", test: (b) => b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff },
-  { ext: "png", mime: "image/png", test: (b) => b.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) },
-  { ext: "webp", mime: "image/webp", test: (b) => b.subarray(0, 4).toString("ascii") === "RIFF" && b.subarray(8, 12).toString("ascii") === "WEBP" },
-];
-
-function removePhotoFile(fileName) {
-  if (!fileName) return;
-  try {
-    fs.unlinkSync(path.join(UPLOAD_DIR, path.basename(fileName)));
-  } catch {
-    // already gone: nothing to do
-  }
-}
-
 class AnimalController {
   // GET /api/animals?species=&breed=&name=&status=
   // Read optional filters, then return matching animals. Staff can add
@@ -259,22 +238,11 @@ class AnimalController {
     const id = parseId(req.params.id, "animal id");
     if (!Animal.findById(id)) throw new HttpError(404, "Animal not found.");
 
-    const image = req.body?.image;
-    const match = typeof image === "string" && /^data:image\/[a-z+]+;base64,([A-Za-z0-9+/=\s]+)$/.exec(image);
-    if (!match) throw fieldError("photo", "Choose a JPEG, PNG or WebP photo.");
-    const bytes = Buffer.from(match[1], "base64");
-    if (bytes.length === 0) throw fieldError("photo", "That file is empty.");
-    if (bytes.length > MAX_PHOTO_BYTES) throw fieldError("photo", "Photos must be 2 MB or smaller.");
-    const type = IMAGE_TYPES.find((t) => t.test(bytes));
-    if (!type) throw fieldError("photo", "Choose a JPEG, PNG or WebP photo.");
-
-    fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-    const fileName = `animal-${id}-${crypto.randomBytes(6).toString("hex")}.${type.ext}`;
-    fs.writeFileSync(path.join(UPLOAD_DIR, fileName), bytes);
+    const fileName = saveImage(`animal-${id}`, req.body?.image, "photo");
 
     const old = Animal.photoFile(id);
     const animal = Animal.setPhoto(id, fileName);
-    removePhotoFile(old);
+    removeImage(old);
     res.json(animal);
   }
 
@@ -284,7 +252,7 @@ class AnimalController {
     if (!Animal.findById(id)) throw new HttpError(404, "Animal not found.");
     const old = Animal.photoFile(id);
     const animal = Animal.setPhoto(id, null);
-    removePhotoFile(old);
+    removeImage(old);
     res.json(animal);
   }
 

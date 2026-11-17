@@ -2,6 +2,7 @@ const AuthService = require("../services/AuthService");
 const User = require("../models/User");
 const HttpError = require("../utils/HttpError");
 const { parseId, optionalText } = require("../utils/validation");
+const { saveImage, removeImage } = require("../utils/images");
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE = /^[0-9+()\-.\s]{7,20}$/;
@@ -77,6 +78,21 @@ class AuthController {
   static updateMe(req, res) {
     const profile = readProfile(requireObject(req.body));
     res.json(User.toPublic(User.updateProfile(req.user.id, profile)));
+  }
+
+  // PUT /api/auth/me/photo { image: "data:image/jpeg;base64,..." }
+  // Sets or replaces the logged-in user's profile picture (JPEG, PNG or
+  // WebP, up to 2 MB). Staff see it next to the user's applications.
+  static uploadPhoto(req, res) {
+    const fileName = saveImage(`user-${req.user.id}`, req.body?.image, "photo");
+    removeImage(User.setPhoto(req.user.id, fileName));
+    res.json(User.toPublic(User.findById(req.user.id)));
+  }
+
+  // DELETE /api/auth/me/photo -> back to initials.
+  static deletePhoto(req, res) {
+    removeImage(User.setPhoto(req.user.id, null));
+    res.json(User.toPublic(User.findById(req.user.id)));
   }
 
   // PUT /api/auth/password { currentPassword, newPassword } -> fresh { token, user }.

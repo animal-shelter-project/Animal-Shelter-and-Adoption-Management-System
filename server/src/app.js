@@ -21,6 +21,9 @@ app.use((req, res, next) => {
 app.use(cors(CLIENT_ORIGIN ? { origin: CLIENT_ORIGIN } : undefined));
 // Photos are sent as base64 JSON, so that one route takes a bigger body.
 app.use("/api/animals/:id/photo", express.json({ limit: "3mb" }));
+app.put("/api/auth/me/photo", express.json({ limit: "3mb" }));
+// An application may carry up to 3 home photos of 2 MB each.
+app.post("/api/applications", express.json({ limit: "9mb" }));
 app.use(express.json({ limit: "100kb" }));
 
 // Uploaded animal photos. Only image files are ever written here.

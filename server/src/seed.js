@@ -146,7 +146,7 @@ const seedDatabase = async () => {
     db.prepare("DELETE FROM users").run();
     // Restart ids at 1 so /animals/1 is always Buddy after a re-seed.
     db.prepare(
-      "DELETE FROM sqlite_sequence WHERE name IN ('status_history', 'applications', 'animals', 'users', 'notifications', 'medical_records', 'appointments', 'pledges', 'wish_items', 'inquiries')",
+      "DELETE FROM sqlite_sequence WHERE name IN ('status_history', 'applications', 'animals', 'users', 'notifications', 'medical_records', 'appointments', 'pledges', 'wish_items', 'inquiries', 'application_photos')",
     ).run();
 
     const userIds = {};

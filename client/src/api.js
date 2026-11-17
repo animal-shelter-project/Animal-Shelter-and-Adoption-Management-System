@@ -241,6 +241,11 @@ export function withPhotoOrigin(animal) {
   return animal;
 }
 
+// Any /uploads/... path (profile pictures, home photos) as a full URL.
+export function uploadUrl(url) {
+  return typeof url === 'string' && url.startsWith('/uploads/') ? `${API_ORIGIN}${url}` : url || null;
+}
+
 // One animal from a response, or a 500 if the server sent something else.
 function oneAnimal(data, missingStatus = 500) {
   const animal = normalizeAnimal(unwrapOne(data, 'animal'));
@@ -298,6 +303,12 @@ export const api = {
     session(await request('/auth/register', { method: 'POST', body: details, auth: false })),
 
   me: async (opts) => normalizeUser(await request('/auth/me', opts)),
+
+  // Your profile picture. image is a data: URL (JPEG, PNG or WebP, 2 MB max).
+  uploadMyPhoto: async (image, opts) =>
+    normalizeUser(await request('/auth/me/photo', { timeout: 30000, ...opts, method: 'PUT', body: { image } })),
+
+  removeMyPhoto: async (opts) => normalizeUser(await request('/auth/me/photo', { ...opts, method: 'DELETE' })),
 
   updateMe: async (details, opts) =>
     normalizeUser(await request('/auth/me', { ...opts, method: 'PUT', body: details })),
@@ -360,9 +371,10 @@ export const api = {
   // Adopter only (proposal R-05 / US-05). 201 with the new application;
   // 400 field errors, 404 unknown animal, 409 animal not Available.
   // v2: answers = { homeType, ownOrRent, landlordOk, hasYard, adults,
-  // children, otherPets, hoursAlone }.
-  submitApplication: (animalId, householdDetails, answers = {}, opts) =>
+  // children, otherPets, hoursAlone }. homePhotos: up to 3 data: URLs.
+  submitApplication: (animalId, householdDetails, answers = {}, opts = {}) =>
     request('/applications', {
+      timeout: answers.homePhotos?.length ? 60000 : undefined,
       ...opts,
       method: 'POST',
       body: { animalId, householdDetails, ...answers },

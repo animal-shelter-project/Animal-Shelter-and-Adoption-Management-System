@@ -21,7 +21,7 @@ describe("Sign-up (v2)", () => {
     expect(res.body.token).toBeTruthy();
     expect(res.body.user).toEqual({
       id: res.body.user.id, email: "jane@example.com", role: "Adopter",
-      name: "Jane Doe", phone: "(817) 555-0142", address: "12 Elm St, Arlington TX",
+      name: "Jane Doe", phone: "(817) 555-0142", address: "12 Elm St, Arlington TX", photoUrl: null,
     });
     const mine = await request(app).get("/api/applications/mine").set("Authorization", bearer(res.body.token));
     expect(mine.status).toBe(200);
@@ -71,7 +71,7 @@ describe("Profile and passwords (v2)", () => {
       .set("Authorization", bearer(token))
       .send({ name: "Alex Adopter", phone: "817-555-0100", address: "" });
     expect(updated.status).toBe(200);
-    expect(updated.body).toEqual({ id: ids.adopterId, email: "adopter@shelter.test", role: "Adopter", name: "Alex Adopter", phone: "817-555-0100", address: "" });
+    expect(updated.body).toEqual({ id: ids.adopterId, email: "adopter@shelter.test", role: "Adopter", name: "Alex Adopter", phone: "817-555-0100", address: "", photoUrl: null });
     const me = await request(app).get("/api/auth/me").set("Authorization", bearer(token));
     expect(me.body.name).toBe("Alex Adopter");
     expect((await request(app).get("/api/auth/me")).status).toBe(401);

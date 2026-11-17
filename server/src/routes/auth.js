@@ -8,6 +8,8 @@ router.post("/login", AuthController.login);
 router.post("/register", AuthController.register);
 router.get("/me", requireAuth, AuthController.me);
 router.put("/me", requireAuth, AuthController.updateMe);
+router.put("/me/photo", requireAuth, AuthController.uploadPhoto);
+router.delete("/me/photo", requireAuth, AuthController.deletePhoto);
 router.put("/password", requireAuth, AuthController.changePassword);
 router.post("/refresh", requireAuth, AuthController.refresh);
 

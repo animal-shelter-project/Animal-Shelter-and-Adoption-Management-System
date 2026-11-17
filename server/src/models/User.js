@@ -1,6 +1,7 @@
 const db = require("../db");
+const { imageUrl } = require("../utils/images");
 
-const PUBLIC = "id, email, role, name, phone, address, token_version, created_at";
+const PUBLIC = "id, email, role, name, phone, address, photo, token_version, created_at";
 
 class User {
   // Includes password_hash: only AuthService should call this.
@@ -43,6 +44,14 @@ class User {
     return User.findById(id);
   }
 
+  // Profile picture file name, or null to remove it. Returns the old file
+  // name so the caller can delete that file.
+  static setPhoto(id, fileName) {
+    const old = db.prepare("SELECT photo FROM users WHERE id = ?").get(id)?.photo ?? null;
+    db.prepare("UPDATE users SET photo = ? WHERE id = ?").run(fileName, id);
+    return old;
+  }
+
   // New password; every older login token for this account stops working.
   static setPassword(id, passwordHash) {
     db.prepare(
@@ -74,6 +83,7 @@ class User {
       name: user.name ?? "",
       phone: user.phone ?? "",
       address: user.address ?? "",
+      photoUrl: imageUrl(user.photo),
     };
   }
 }
