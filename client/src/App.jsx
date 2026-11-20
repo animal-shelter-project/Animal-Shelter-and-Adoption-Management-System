@@ -2,6 +2,7 @@ import { Route, Routes, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar.jsx';
 import ScrollEffects from './components/ScrollEffects.jsx';
 import SiteFooter from './components/SiteFooter.jsx';
+import WelcomeDialog from './components/WelcomeDialog.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import ScrollToTop from './components/ScrollToTop.jsx';
 import RequireRole from './auth/RequireRole.jsx';
@@ -33,6 +34,7 @@ export default function App() {
       <ScrollToTop />
       <ScrollEffects />
       <Navbar />
+      <WelcomeDialog />
       <main id="main" tabIndex={-1}>
         <ErrorBoundary resetKey={pathname}>
           <Routes>

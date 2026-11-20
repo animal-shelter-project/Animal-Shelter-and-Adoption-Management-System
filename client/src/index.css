@@ -1021,7 +1021,7 @@ a.stat-accent:hover { color: #fff; }
 .photo-row { display: flex; gap: 1.25rem; align-items: flex-start; flex-wrap: wrap; }
 .photo-row > div { flex: 1 1 14rem; min-width: 0; }
 .applicant-who { display: flex; align-items: center; gap: 0.5rem; }
-.home-photos { border: 0; padding: 0; margin: 0 0 1.25rem; min-width: 0; }
+.home-photos { border: 0; padding: 0; margin: 0 0 1.25rem; min-width: 0; position: relative; }
 .home-photos legend { font-weight: 600; padding: 0; margin-bottom: 0.25rem; }
 .photo-thumbs { list-style: none; padding: 0; margin: 0.5rem 0 0.75rem; display: flex; flex-wrap: wrap; gap: 0.75rem; }
 .photo-thumbs li { display: flex; flex-direction: column; gap: 0.35rem; align-items: flex-start; }
@@ -1031,3 +1031,34 @@ a.stat-accent:hover { color: #fff; }
 .photo-thumbs-small img { width: 4.5rem; height: 3.4rem; }
 .photo-thumbs-small a { display: block; border-radius: var(--radius-sm); }
 .home-photos > .btn { justify-self: start; align-self: flex-start; width: auto; }
+
+/* ---------- First-visit welcome box ---------- */
+.welcome-dialog {
+  width: min(26rem, calc(100vw - 2rem));
+  border: 0;
+  border-radius: var(--radius);
+  padding: 2rem 1.75rem 1.5rem;
+  background: #fff;
+  color: var(--ink, #14213d);
+  box-shadow: 0 24px 60px rgba(11, 20, 38, 0.35);
+  text-align: center;
+}
+.welcome-dialog[open] { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; }
+.welcome-dialog::backdrop { background: rgba(11, 20, 38, 0.65); }
+.welcome-dialog h2 { margin: 0; font-size: 1.6rem; }
+.welcome-dialog p { margin: 0; }
+.welcome-close { position: absolute; top: 0.5rem; right: 0.5rem; color: var(--black); }
+.welcome-close:hover { color: var(--orange-deep); }
+.welcome-dialog { position: fixed; }
+.welcome-mark {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 3.5rem; height: 3.5rem; border-radius: 50%;
+  background: var(--black); color: var(--orange);
+}
+.welcome-mark .icon { width: 1.8rem; height: 1.8rem; }
+.welcome-actions { display: flex; flex-direction: column; gap: 0.6rem; width: 100%; margin-top: 0.5rem; }
+.welcome-staff { margin-top: 0.25rem; }
+@media (prefers-reduced-motion: no-preference) {
+  .welcome-dialog[open] { animation: welcome-in 0.25s ease-out; }
+  @keyframes welcome-in { from { opacity: 0; transform: translateY(12px) scale(0.98); } }
+}
