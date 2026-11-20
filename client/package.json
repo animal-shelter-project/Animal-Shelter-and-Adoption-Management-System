@@ -9,8 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest",
-    "mock-api": "node mock-api/server.js"
+    "test:watch": "vitest"
   },
   "dependencies": {
     "react": "^19.2.8",

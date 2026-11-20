@@ -1,0 +1,118 @@
+﻿
+> client@0.0.0 test
+> vitest run
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.4 [39m[90mC:/Users/ammar/Desktop/cse5324/Animal-Shelter-and-Adoption-Management-System/client[39m
+
+ [32mΓ£ô[39m src/__tests__/EditAnimalForm.test.jsx [2m([22m[2m5 tests[22m[2m)[22m[33m 2170[2mms[22m[39m
+   [32mΓ£ô[39m Edit animal page (proposal R-01, BUG-05) [2m(5)[22m
+     [33m[2mΓ£ô[22m[39m T-EDIT-UI-1: the form starts with the animal's current details[33m 554[2mms[22m[39m
+     [33m[2mΓ£ô[22m[39m T-EDIT-UI-2: saving sends the details (never the status) and confirms[33m 1017[2mms[22m[39m
+     [33m[2mΓ£ô[22m[39m T-EDIT-UI-3: an invalid age is shown next to the field and nothing is sent[33m 381[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/StaffStatusPanel.test.jsx [2m([22m[2m6 tests[22m[2m)[22m[33m 3046[2mms[22m[39m
+   [32mΓ£ô[39m Status history panel (proposal R-09, R-12) [2m(6)[22m
+     [33m[2mΓ£ô[22m[39m T-HIST-UI-1: staff see the animal's status history[33m 725[2mms[22m[39m
+     [33m[2mΓ£ô[22m[39m T-HIST-UI-2: adopters and visitors never see or load the history[33m 496[2mms[22m[39m
+     [33m[2mΓ£ô[22m[39m T-HIST-UI-3: changing the status updates the badge and adds a history entry[33m 1080[2mms[22m[39m
+     [33m[2mΓ£ô[22m[39m T-HIST-UI-5: a refused change shows the server's reason[33m 436[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/StaffV2Batch4.test.jsx [2m([22m[2m4 tests[22m[2m)[22m[33m 3404[2mms[22m[39m
+   [32mΓ£ô[39m Staff panels (v2) [2m(4)[22m
+     [33m[2mΓ£ô[22m[39m T-MED-UI-1: staff see medical records and add one[33m 1802[2mms[22m[39m
+     [33m[2mΓ£ô[22m[39m T-MED-UI-2: staff correct a record and delete one entered by mistake[33m 929[2mms[22m[39m
+     [33m[2mΓ£ô[22m[39m T-APPT-UI-1: staff book an appointment; a clash shows the serverΓÇÖs reason[33m 451[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/UserPhotos.test.jsx [2m([22m[2m3 tests[22m[2m)[22m[33m 3455[2mms[22m[39m
+   [32mΓ£ô[39m Profile picture [2m(1)[22m
+     [33m[2mΓ£ô[22m[39m T-AVATAR-UI-1: a user uploads a profile picture, sees it, and can remove it[33m 1306[2mms[22m[39m
+   [32mΓ£ô[39m Home photos on an application [2m(2)[22m
+     [33m[2mΓ£ô[22m[39m T-HOME-UI-1: an adopter adds home photos, removes one, and the rest are sent with the application[33m 1923[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/AnimalList.test.jsx [2m([22m[2m15 tests[22m[2m)[22m[33m 5171[2mms[22m[39m
+   [32mΓ£ô[39m Browse available animals (proposal R-02 / US-02) [2m(2)[22m
+     [33m[2mΓ£ô[22m[39m T-BROWSE-1: on load only Available animals are shown[33m 786[2mms[22m[39m
+     [33m[2mΓ£ô[22m[39m T-BROWSE-2: "All statuses" shows every animal with its badge[33m 780[2mms[22m[39m
+   [32mΓ£ô[39m Search and filter (proposal R-03 / US-03; plan US-01, FR-01) [2m(11)[22m
+     [33m[2mΓ£ô[22m[39m T-SEARCH-1: filtering species=Dog shows only dogs[33m 354[2mms[22m[39m
+     [33m[2mΓ£ô[22m[39m T-AGE-1: the age filter shows only animals in that age group[33m 406[2mms[22m[39m
+     [33m[2mΓ£ô[22m[39m T-SEARCH-2: a breed with no matches shows the empty message[33m 1019[2mms[22m[39m
+     [33m[2mΓ£ô[22m[39m T-SEARCH-5: breed search is partial and case-insensitive[33m 629[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/ApplicationsV2.test.jsx [2m([22m[2m7 tests[22m[2m)[22m[33m 5185[2mms[22m[39m
+   [32mΓ£ô[39m Applying (v2) [2m(4)[22m
+     [33m[2mΓ£ô[22m[39m T-APPLY-V2-UI-1: the structured answers are sent with the application[33m 3169[2mms[22m[39m
+   [32mΓ£ô[39m Staff (v2) [2m(3)[22m
+     [33m[2mΓ£ô[22m[39m T-REVIEW-V2-UI-1: staff see the applicantΓÇÖs name, phone and answers, and save notes[33m 832[2mms[22m[39m
+     [33m[2mΓ£ô[22m[39m T-WALKIN-UI-1: marking an animal Adopted asks who adopted it and sends the adopter[33m 487[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/Login.test.jsx [2m([22m[2m7 tests[22m[2m)[22m[33m 5540[2mms[22m[39m
+   [32mΓ£ô[39m US-05 Login UI [2m(7)[22m
+     [33m[2mΓ£ô[22m[39m T-LOGIN-UI-1: valid login stores the token and user[33m 2099[2mms[22m[39m
+     [33m[2mΓ£ô[22m[39m T-LOGIN-UI-2: wrong password shows an error and clears the password[33m 986[2mms[22m[39m
+     [33m[2mΓ£ô[22m[39m T-LOGIN-UI-3: empty and malformed email are caught before calling the server[33m 679[2mms[22m[39m
+     [33m[2mΓ£ô[22m[39m T-LOGIN-UI-4: Staff land on Review applications[33m 847[2mms[22m[39m
+     [33m[2mΓ£ô[22m[39m T-LOGIN-UI-7: a Staff login never lands on an adopter-only page[33m 922[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/PublicPagesV3.test.jsx [2m([22m[2m5 tests[22m[2m)[22m[33m 5516[2mms[22m[39m
+   [32mΓ£ô[39m Sign-up forms [2m(2)[22m
+     [33m[2mΓ£ô[22m[39m T-VOL-UI-1: the volunteer form shows every missing answer, then sends the sign-up[33m 2999[2mms[22m[39m
+     [33m[2mΓ£ô[22m[39m T-FOSTER-UI-1: the foster form sends the chosen animals and length; server errors are shown[33m 1320[2mms[22m[39m
+   [32mΓ£ô[39m Wish list [2m(1)[22m
+     [33m[2mΓ£ô[22m[39m T-WISH-UI-1: promising items updates the progress bar and thanks the person[33m 996[2mms[22m[39m
+node.exe : Not implemented: Window's scrollTo() method
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Not implemented...rollTo() method:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+ [32mΓ£ô[39m src/__tests__/StaffAnimalForm.test.jsx [2m([22m[2m8 tests[22m[2m)[22m[33m 7870[2mms[22m[39m
+   [32mΓ£ô[39m Add animal form (proposal R-01 / US-01) [2m(8)[22m
+     [33m[2mΓ£ô[22m[39m T-ADD-UI-1: a valid form saves the animal and opens its profile[33m 1855[2mms[22m[39m
+     [33m[2mΓ£ô[22m[39m T-ADD-UI-3: negative or decimal ages are rejected before sending[33m 1488[2mms[22m[39m
+     [33m[2mΓ£ô[22m[39m T-ADD-UI-4: field errors from the server are shown next to the fields[33m 907[2mms[22m[39m
+     [33m[2mΓ£ô[22m[39m T-ADD-UI-5: "Other" species asks for the species name and sends it[33m 1478[2mms[22m[39m
+     [33m[2mΓ£ô[22m[39m T-ADD-UI-6: a server error keeps the form filled in and can be retried[33m 965[2mms[22m[39m
+     [33m[2mΓ£ô[22m[39m T-ADD-UI-7: the button is disabled while saving (no double submit)[33m 981[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/AccountsV2.test.jsx [2m([22m[2m8 tests[22m[2m)[22m[33m 8156[2mms[22m[39m
+   [32mΓ£ô[39m Sign-up (v2) [2m(4)[22m
+     [33m[2mΓ£ô[22m[39m T-REG-UI-1: a visitor signs up, is logged in and sent to the animals[33m 2978[2mms[22m[39m
+     [33m[2mΓ£ô[22m[39m T-REG-UI-2: every problem is shown at once and nothing is sent[33m 399[2mms[22m[39m
+     [33m[2mΓ£ô[22m[39m T-REG-UI-3: an email that already has an account is shown next to the email box[33m 1814[2mms[22m[39m
+   [32mΓ£ô[39m My account (v2) [2m(3)[22m
+     [33m[2mΓ£ô[22m[39m T-ACC-UI-1: saving contact details updates them[33m 465[2mms[22m[39m
+     [33m[2mΓ£ô[22m[39m T-ACC-UI-2: changing the password keeps you logged in with the new token[33m 1196[2mms[22m[39m
+     [33m[2mΓ£ô[22m[39m T-ACC-UI-3: a wrong current password is shown next to that box[33m 1113[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/AnimalDetailsV2.test.jsx [2m([22m[2m9 tests[22m[2m)[22m[33m 8412[2mms[22m[39m
+   [32mΓ£ô[39m Animal details (v2) [2m(4)[22m
+     [33m[2mΓ£ô[22m[39m T-DETAILS-UI-1: the add form sends months, sex, size, good with, fee and description[33m 3562[2mms[22m[39m
+     [33m[2mΓ£ô[22m[39m T-DETAILS-UI-2: months over 11 or a fee that is not a whole number are shown and nothing is sent[33m 1388[2mms[22m[39m
+     [33m[2mΓ£ô[22m[39m T-DUP-UI-1: a duplicate warning links to the existing animal; "add anyway" sends allowDuplicate[33m 1131[2mms[22m[39m
+   [32mΓ£ô[39m Name search, sorting and pages (v2) [2m(3)[22m
+     [33m[2mΓ£ô[22m[39m T-LIST-V2-1: typing a name narrows the list and puts ?name= in the URL[33m 713[2mms[22m[39m
+     [33m[2mΓ£ô[22m[39m T-LIST-V2-2: 12 animals per page, with Next and Previous[33m 407[2mms[22m[39m
+     [33m[2mΓ£ô[22m[39m T-LIST-V2-3: sorting by name and by age[33m 780[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/Navbar.test.jsx [2m([22m[2m3 tests[22m[2m)[22m[33m 1026[2mms[22m[39m
+   [32mΓ£ô[39m Navbar role links (US-05) [2m(3)[22m
+     [33m[2mΓ£ô[22m[39m T-NAV-1: logged out shows Login and no staff links[33m 603[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/api.test.js [2m([22m[2m10 tests[22m[2m)[22m[32m 82[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/AnimalProfile.test.jsx [2m([22m[2m9 tests[22m[2m)[22m[33m 1381[2mms[22m[39m
+   [32mΓ£ô[39m US-02 View animal profile (FR-02, UC-01) [2m(5)[22m
+     [33m[2mΓ£ô[22m[39m T-PROFILE-1: a valid ID shows the correct animal[33m 638[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/normalize.test.js [2m([22m[2m10 tests[22m[2m)[22m[32m 29[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/applicationForm.test.js [2m([22m[2m6 tests[22m[2m)[22m[32m 20[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/Auth.test.jsx [2m([22m[2m5 tests[22m[2m)[22m[33m 1213[2mms[22m[39m
+   [32mΓ£ô[39m Route protection and session handling (US-05) [2m(5)[22m
+     [33m[2mΓ£ô[22m[39m T-AUTH-1: an expired token on page load means logged out[33m 563[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/StaffApplications.test.jsx [2m([22m[2m6 tests[22m[2m)[22m[33m 1695[2mms[22m[39m
+   [32mΓ£ô[39m Review applications page (proposal R-06, R-07) [2m(6)[22m
+     [33m[2mΓ£ô[22m[39m T-REVIEW-UI-1: staff see each pending application with the animal, applicant and household details[33m 967[2mms[22m[39m
+     [33m[2mΓ£ô[22m[39m T-REVIEW-UI-3: approving sends the decision, confirms it and removes the row[33m 306[2mms[22m[39m
+ [32mΓ£ô[39m src/__tests__/Welcome.test.jsx [2m([22m[2m2 tests[22m[2m)[22m[33m 563[2mms[22m[39m
+   [32mΓ£ô[39m Welcome box [2m(2)[22m
+     [33m[2mΓ£ô[22m[39m T-WELCOME-UI-1: a first-time visitor is offered Log in, Create an account or Just browse; the choice is remembered[33m 445[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m19 passed[39m[22m[90m (19)[39m
+[2m      Tests [22m [1m[32m128 passed[39m[22m[90m (128)[39m
+[2m   Start at [22m 21:24:06
+[2m   Duration [22m 21.52s[2m (environment 51%, tests 32%, setup 11%, import 5%, transform 1%)[22m
+
+[2mEnvironment [22m [33mjsdom was created 19 times[39m[2m ┬╖ 103.47s total, 51% of tracked time[22m
+[2m            [22m [2mcreate it once per worker with [22m[33mpool: 'vmThreads'[39m[2m (keeps per-file isolation) or [22m[33misolate: false[39m[2m (shares it across files)[22m
+[2m            [22m [2mlearn more: https://vitest.dev/guide/improving-performance#test-environments[22m
+

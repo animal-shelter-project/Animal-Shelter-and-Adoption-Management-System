@@ -1,0 +1,31 @@
+﻿
+> server@1.0.0 test
+> jest
+
+node.exe : PASS __tests__/animals.test.js
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (PASS __tests__/animals.test.js:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+PASS __tests__/submitApplication.test.js
+PASS __tests__/userPhotos.test.js
+PASS __tests__/appointmentsDashboard.test.js
+PASS __tests__/reviewApplications.test.js
+PASS __tests__/statusHistory.test.js
+PASS __tests__/inquiriesWishlist.test.js
+PASS __tests__/medicalRecords.test.js
+PASS __tests__/applicationsV2.test.js
+PASS __tests__/animalDetails.test.js
+PASS __tests__/applications.test.js
+PASS __tests__/animalAge.test.js
+PASS __tests__/manageAnimals.test.js
+PASS __tests__/auth.test.js
+PASS __tests__/accounts.test.js
+
+Test Suites: 15 passed, 15 total
+Tests:       149 passed, 149 total
+Snapshots:   0 total
+Time:        6.049 s, estimated 8 s
+Ran all test suites.
