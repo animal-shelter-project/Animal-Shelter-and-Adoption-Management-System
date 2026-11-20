@@ -18,9 +18,4 @@ export default defineConfig([
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
   },
-  // The temporary mock API runs in Node, not the browser.
-  {
-    files: ['mock-api/**/*.js'],
-    languageOptions: { globals: globals.node },
-  },
 ])
