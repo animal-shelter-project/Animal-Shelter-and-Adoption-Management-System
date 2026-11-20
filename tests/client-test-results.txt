@@ -5,110 +5,110 @@
 
  RUN  v5.0.4 C:/Users/ammar/Desktop/cse5324/Animal-Shelter-and-Adoption-Management-System/client
 
- ✓ src/__tests__/EditAnimalForm.test.jsx (5 tests) 1928ms
+ ✓ src/__tests__/EditAnimalForm.test.jsx (5 tests) 2876ms
    ✓ Edit animal page (proposal R-01, BUG-05) (5)
-     ✓ T-EDIT-UI-1: the form starts with the animal's current details 438ms
-     ✓ T-EDIT-UI-2: saving sends the details (never the status) and confirms 872ms
-     ✓ T-EDIT-UI-3: an invalid age is shown next to the field and nothing is sent 413ms
- ✓ src/__tests__/StaffStatusPanel.test.jsx (6 tests) 3012ms
+     ✓ T-EDIT-UI-1: the form starts with the animal's current details 470ms
+     ✓ T-EDIT-UI-2: saving sends the details (never the status) and confirms 1459ms
+     ✓ T-EDIT-UI-3: an invalid age is shown next to the field and nothing is sent 601ms
+ ✓ src/__tests__/StaffStatusPanel.test.jsx (6 tests) 3764ms
    ✓ Status history panel (proposal R-09, R-12) (6)
-     ✓ T-HIST-UI-1: staff see the animal's status history 694ms
-     ✓ T-HIST-UI-2: adopters and visitors never see or load the history 573ms
-     ✓ T-HIST-UI-3: changing the status updates the badge and adds a history entry 1142ms
-     ✓ T-HIST-UI-5: a refused change shows the server's reason 401ms
- ✓ src/__tests__/UserPhotos.test.jsx (3 tests) 3630ms
-   ✓ Profile picture (1)
-     ✓ T-AVATAR-UI-1: a user uploads a profile picture, sees it, and can remove it 1114ms
-   ✓ Home photos on an application (2)
-     ✓ T-HOME-UI-1: an adopter adds home photos, removes one, and the rest are sent with the application 2242ms
- ✓ src/__tests__/StaffV2Batch4.test.jsx (4 tests) 3247ms
+     ✓ T-HIST-UI-1: staff see the animal's status history 855ms
+     ✓ T-HIST-UI-2: adopters and visitors never see or load the history 897ms
+     ✓ T-HIST-UI-3: changing the status updates the badge and adds a history entry 1394ms
+     ✓ T-HIST-UI-5: a refused change shows the server's reason 413ms
+ ✓ src/__tests__/StaffV2Batch4.test.jsx (4 tests) 3894ms
    ✓ Staff panels (v2) (4)
-     ✓ T-MED-UI-1: staff see medical records and add one 1673ms
-     ✓ T-MED-UI-2: staff correct a record and delete one entered by mistake 1021ms
-     ✓ T-APPT-UI-1: staff book an appointment; a clash shows the server’s reason 304ms
- ✓ src/__tests__/AnimalList.test.jsx (15 tests) 4981ms
-   ✓ Browse available animals (proposal R-02 / US-02) (2)
-     ✓ T-BROWSE-1: on load only Available animals are shown 432ms
-     ✓ T-BROWSE-2: "All statuses" shows every animal with its badge 873ms
-   ✓ Search and filter (proposal R-03 / US-03; plan US-01, FR-01) (11)
-     ✓ T-AGE-1: the age filter shows only animals in that age group 472ms
-     ✓ T-SEARCH-2: a breed with no matches shows the empty message 965ms
-     ✓ T-SEARCH-5: breed search is partial and case-insensitive 688ms
-     ✓ T-SEARCH-8: Clear filters returns to all Available animals 315ms
- ✓ src/__tests__/Login.test.jsx (7 tests) 5738ms
-   ✓ US-05 Login UI (7)
-     ✓ T-LOGIN-UI-1: valid login stores the token and user 1990ms
-     ✓ T-LOGIN-UI-2: wrong password shows an error and clears the password 1124ms
-     ✓ T-LOGIN-UI-3: empty and malformed email are caught before calling the server 699ms
-     ✓ T-LOGIN-UI-4: Staff land on Review applications 1053ms
-     ✓ T-LOGIN-UI-7: a Staff login never lands on an adopter-only page 865ms
- ✓ src/__tests__/ApplicationsV2.test.jsx (7 tests) 5649ms
+     ✓ T-MED-UI-1: staff see medical records and add one 2226ms
+     ✓ T-MED-UI-2: staff correct a record and delete one entered by mistake 995ms
+     ✓ T-APPT-UI-1: staff book an appointment; a clash shows the server’s reason 410ms
+ ✓ src/__tests__/UserPhotos.test.jsx (3 tests) 4478ms
+   ✓ Profile picture (1)
+     ✓ T-AVATAR-UI-1: a user uploads a profile picture, sees it, and can remove it 1827ms
+   ✓ Home photos on an application (2)
+     ✓ T-HOME-UI-1: an adopter adds home photos, removes one, and the rest are sent with the application 2434ms
+ ✓ src/__tests__/ApplicationsV2.test.jsx (7 tests) 5837ms
    ✓ Applying (v2) (4)
-     ✓ T-APPLY-V2-UI-1: the structured answers are sent with the application 3505ms
-     ✓ T-APPLY-V2-UI-2: unanswered questions are flagged and nothing is sent 356ms
+     ✓ T-APPLY-V2-UI-1: the structured answers are sent with the application 3763ms
    ✓ Staff (v2) (3)
-     ✓ T-REVIEW-V2-UI-1: staff see the applicant’s name, phone and answers, and save notes 963ms
-     ✓ T-WALKIN-UI-1: marking an animal Adopted asks who adopted it and sends the adopter 390ms
- ✓ src/__tests__/PublicPagesV3.test.jsx (5 tests) 5343ms
+     ✓ T-REVIEW-V2-UI-1: staff see the applicant’s name, phone and answers, and save notes 904ms
+     ✓ T-WALKIN-UI-1: marking an animal Adopted asks who adopted it and sends the adopter 438ms
+ ✓ src/__tests__/PublicPagesV3.test.jsx (5 tests) 5938ms
    ✓ Sign-up forms (2)
-     ✓ T-VOL-UI-1: the volunteer form shows every missing answer, then sends the sign-up 2585ms
-     ✓ T-FOSTER-UI-1: the foster form sends the chosen animals and length; server errors are shown 1550ms
+     ✓ T-VOL-UI-1: the volunteer form shows every missing answer, then sends the sign-up 3580ms
+     ✓ T-FOSTER-UI-1: the foster form sends the chosen animals and length; server errors are shown 1354ms
    ✓ Wish list (1)
-     ✓ T-WISH-UI-1: promising items updates the progress bar and thanks the person 980ms
- ✓ src/__tests__/AccountsV2.test.jsx (8 tests) 8832ms
-   ✓ Sign-up (v2) (4)
-     ✓ T-REG-UI-1: a visitor signs up, is logged in and sent to the animals 2999ms
-     ✓ T-REG-UI-2: every problem is shown at once and nothing is sent 631ms
-     ✓ T-REG-UI-3: an email that already has an account is shown next to the email box 2204ms
-   ✓ My account (v2) (3)
-     ✓ T-ACC-UI-1: saving contact details updates them 381ms
-     ✓ T-ACC-UI-2: changing the password keeps you logged in with the new token 1267ms
-     ✓ T-ACC-UI-3: a wrong current password is shown next to that box 1181ms
+     ✓ T-WISH-UI-1: promising items updates the progress bar and thanks the person 824ms
+ ✓ src/__tests__/AnimalList.test.jsx (15 tests) 5874ms
+   ✓ Browse available animals (proposal R-02 / US-02) (2)
+     ✓ T-BROWSE-1: on load only Available animals are shown 803ms
+     ✓ T-BROWSE-2: "All statuses" shows every animal with its badge 1423ms
+   ✓ Search and filter (proposal R-03 / US-03; plan US-01, FR-01) (11)
+     ✓ T-SEARCH-1: filtering species=Dog shows only dogs 434ms
+     ✓ T-AGE-1: the age filter shows only animals in that age group 520ms
+     ✓ T-SEARCH-2: a breed with no matches shows the empty message 868ms
+     ✓ T-SEARCH-5: breed search is partial and case-insensitive 574ms
+ ✓ src/__tests__/Login.test.jsx (7 tests) 5937ms
+   ✓ US-05 Login UI (7)
+     ✓ T-LOGIN-UI-1: valid login stores the token and user 2430ms
+     ✓ T-LOGIN-UI-2: wrong password shows an error and clears the password 1143ms
+     ✓ T-LOGIN-UI-3: empty and malformed email are caught before calling the server 793ms
+     ✓ T-LOGIN-UI-4: Staff land on Review applications 812ms
+     ✓ T-LOGIN-UI-7: a Staff login never lands on an adopter-only page 753ms
 Not implemented: Window's scrollTo() method
- ✓ src/__tests__/StaffAnimalForm.test.jsx (8 tests) 8180ms
+ ✓ src/__tests__/StaffAnimalForm.test.jsx (8 tests) 8325ms
    ✓ Add animal form (proposal R-01 / US-01) (8)
-     ✓ T-ADD-UI-1: a valid form saves the animal and opens its profile 1889ms
-     ✓ T-ADD-UI-3: negative or decimal ages are rejected before sending 1629ms
-     ✓ T-ADD-UI-4: field errors from the server are shown next to the fields 978ms
-     ✓ T-ADD-UI-5: "Other" species asks for the species name and sends it 1565ms
-     ✓ T-ADD-UI-6: a server error keeps the form filled in and can be retried 935ms
-     ✓ T-ADD-UI-7: the button is disabled while saving (no double submit) 939ms
- ✓ src/__tests__/AnimalDetailsV2.test.jsx (9 tests) 9141ms
+     ✓ T-ADD-UI-1: a valid form saves the animal and opens its profile 2493ms
+     ✓ T-ADD-UI-2: an empty form shows every missing field and sends nothing 340ms
+     ✓ T-ADD-UI-3: negative or decimal ages are rejected before sending 1333ms
+     ✓ T-ADD-UI-4: field errors from the server are shown next to the fields 836ms
+     ✓ T-ADD-UI-5: "Other" species asks for the species name and sends it 1452ms
+     ✓ T-ADD-UI-6: a server error keeps the form filled in and can be retried 958ms
+     ✓ T-ADD-UI-7: the button is disabled while saving (no double submit) 903ms
+ ✓ src/__tests__/AccountsV2.test.jsx (8 tests) 8303ms
+   ✓ Sign-up (v2) (4)
+     ✓ T-REG-UI-1: a visitor signs up, is logged in and sent to the animals 3552ms
+     ✓ T-REG-UI-2: every problem is shown at once and nothing is sent 335ms
+     ✓ T-REG-UI-3: an email that already has an account is shown next to the email box 1775ms
+   ✓ My account (v2) (3)
+     ✓ T-ACC-UI-1: saving contact details updates them 391ms
+     ✓ T-ACC-UI-2: changing the password keeps you logged in with the new token 1067ms
+     ✓ T-ACC-UI-3: a wrong current password is shown next to that box 978ms
+ ✓ src/__tests__/AnimalDetailsV2.test.jsx (9 tests) 9082ms
    ✓ Animal details (v2) (4)
-     ✓ T-DETAILS-UI-1: the add form sends months, sex, size, good with, fee and description 4209ms
-     ✓ T-DETAILS-UI-2: months over 11 or a fee that is not a whole number are shown and nothing is sent 1282ms
-     ✓ T-DUP-UI-1: a duplicate warning links to the existing animal; "add anyway" sends allowDuplicate 1198ms
+     ✓ T-DETAILS-UI-1: the add form sends months, sex, size, good with, fee and description 4238ms
+     ✓ T-DETAILS-UI-2: months over 11 or a fee that is not a whole number are shown and nothing is sent 1202ms
+     ✓ T-DUP-UI-1: a duplicate warning links to the existing animal; "add anyway" sends allowDuplicate 870ms
    ✓ Staff tools on the profile (v2) (2)
-     ✓ T-TOOLS-UI-1: staff can archive an animal; the profile then says it is archived 318ms
+     ✓ T-TOOLS-UI-1: staff can archive an animal; the profile then says it is archived 426ms
    ✓ Name search, sorting and pages (v2) (3)
-     ✓ T-LIST-V2-1: typing a name narrows the list and puts ?name= in the URL 754ms
-     ✓ T-LIST-V2-2: 12 animals per page, with Next and Previous 459ms
-     ✓ T-LIST-V2-3: sorting by name and by age 688ms
- ✓ src/__tests__/StaffApplications.test.jsx (6 tests) 1530ms
-   ✓ Review applications page (proposal R-06, R-07) (6)
-     ✓ T-REVIEW-UI-1: staff see each pending application with the animal, applicant and household details 690ms
- ✓ src/__tests__/normalize.test.js (10 tests) 27ms
- ✓ src/__tests__/Navbar.test.jsx (3 tests) 824ms
+     ✓ T-LIST-V2-1: typing a name narrows the list and puts ?name= in the URL 678ms
+     ✓ T-LIST-V2-2: 12 animals per page, with Next and Previous 615ms
+     ✓ T-LIST-V2-3: sorting by name and by age 849ms
+ ✓ src/__tests__/Navbar.test.jsx (3 tests) 821ms
    ✓ Navbar role links (US-05) (3)
-     ✓ T-NAV-1: logged out shows Login and no staff links 550ms
- ✓ src/__tests__/Auth.test.jsx (5 tests) 1075ms
+     ✓ T-NAV-1: logged out shows Login and no staff links 539ms
+ ✓ src/__tests__/Auth.test.jsx (5 tests) 951ms
    ✓ Route protection and session handling (US-05) (5)
-     ✓ T-AUTH-1: an expired token on page load means logged out 441ms
- ✓ src/__tests__/AnimalProfile.test.jsx (9 tests) 1191ms
+     ✓ T-AUTH-1: an expired token on page load means logged out 391ms
+ ✓ src/__tests__/normalize.test.js (10 tests) 25ms
+ ✓ src/__tests__/api.test.js (10 tests) 76ms
+ ✓ src/__tests__/AnimalProfile.test.jsx (9 tests) 1122ms
    ✓ US-02 View animal profile (FR-02, UC-01) (5)
-     ✓ T-PROFILE-1: a valid ID shows the correct animal 626ms
- ✓ src/__tests__/api.test.js (10 tests) 66ms
- ✓ src/__tests__/applicationForm.test.js (6 tests) 12ms
- ✓ src/__tests__/Welcome.test.jsx (2 tests) 709ms
+     ✓ T-PROFILE-1: a valid ID shows the correct animal 528ms
+ ✓ src/__tests__/applicationForm.test.js (6 tests) 39ms
+ ✓ src/__tests__/StaffApplications.test.jsx (6 tests) 1413ms
+   ✓ Review applications page (proposal R-06, R-07) (6)
+     ✓ T-REVIEW-UI-1: staff see each pending application with the animal, applicant and household details 663ms
+ ✓ src/__tests__/Welcome.test.jsx (2 tests) 722ms
    ✓ Welcome box (2)
-     ✓ T-WELCOME-UI-1: a first-time visitor is offered Log in, Create an account or Just browse; the choice is remembered 587ms
+     ✓ T-WELCOME-UI-1: a first-time visitor is offered Log in, Create an account or Just browse; the choice is remembered 590ms
 
  Test Files  19 passed (19)
       Tests  128 passed (128)
-   Start at  21:35:20
-   Duration  24.28s (environment 55%, tests 28%, setup 11%, import 5%)
+   Start at  21:54:01
+   Duration  25.98s (environment 54%, tests 28%, setup 12%, import 5%, transform 1%)
 
-Environment  jsdom was created 19 times · 125.68s total, 55% of tracked time
+Environment  jsdom was created 19 times · 134.46s total, 54% of tracked time
              create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
              learn more: https://vitest.dev/guide/improving-performance#test-environments
 

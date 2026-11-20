@@ -9,5 +9,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: './src/test/setup.js',
+    // Some tests type into whole forms; give them time on slower or busy machines.
+    testTimeout: 20000,
   },
 })
